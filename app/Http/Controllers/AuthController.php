@@ -28,4 +28,17 @@ class AuthController extends Controller
         return response()->json(['status' => true, 'message' => 'Logout realizado com sucesso']);
     }
 
+    public function validateToken(Request $request)
+    {
+        try {
+            $token = JWTAuth::parseToken()->authenticate();
+            return response()->json(['status' => true, 'message' => 'Token válido']);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            return response()->json(['error' => 'Token expirado'], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return response()->json(['error' => 'Token inválido'], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json(['error' => 'Token de autorização não encontrado'], 401);
+        }
+    }
 }
