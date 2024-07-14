@@ -14,8 +14,11 @@ class AuthController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $user = auth()->user();
+
         return response()->json([
             'status' => true,
+            'user' => $user,
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60
@@ -25,7 +28,8 @@ class AuthController extends Controller
     public function logout()
     {
         JWTAuth::invalidate(JWTAuth::getToken());
-        return response()->json(['status' => true, 'message' => 'Logout realizado com sucesso']);
+        $user = auth()->user();
+        return response()->json(['status' => true, 'user' => $user, 'message' => 'Logout realizado com sucesso']);
     }
 
     public function validateToken(Request $request)
