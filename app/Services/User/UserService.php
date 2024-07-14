@@ -12,6 +12,35 @@ use Illuminate\Support\Facades\Log;
 
 class UserService
 {
+
+    public function search($request)
+    {
+        try {
+            $perPage = $request->input('take', 10);
+            $users = User::where('is_admin', false)->paginate($perPage);
+
+            return ['status' => true, 'data' => $users];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
+    }
+
+    public function userBlock($user_id)
+    {
+        try {
+            $user = User::find($user_id);
+
+            if (!$user) throw new Exception('Usuário não encontrado');
+
+            $user->is_active = !$user->is_active;
+            $user->save();
+
+            return ['status' => true, 'data' => $user];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
+    }
+
     public function requestRecoverPassword($request)
     {
         try {
