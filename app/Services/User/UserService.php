@@ -17,7 +17,16 @@ class UserService
     {
         try {
             $perPage = $request->input('take', 10);
-            $users = User::where('is_admin', false)->paginate($perPage);
+            $search_term = $request->search_term;
+
+            $users = User::where('is_admin', false);
+
+            if($search_term){
+                $users->where('name', 'LIKE', "%{$search_term}%")
+                    ->orWhere('email', 'LIKE', "%{$search_term}%");
+            }
+
+            $users->paginate($perPage);
 
             return ['status' => true, 'data' => $users];
         } catch (Exception $error) {
