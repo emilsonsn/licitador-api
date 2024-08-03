@@ -124,15 +124,15 @@ class TenderService
 
         if(isset($favoriteTender)){
             $favoriteTender->delete();
+            $favoriteTender = null;
         }else{
-            FavoriteTender::create([
+            $favoriteTender = FavoriteTender::create([
                 'tender_id' => $tender_id,
                 'user_id' => $auth->id
             ]);
         }
-        return ['status' => true, 'data' => $favoriteTender ?? null];
+        return ['status' => true, 'data' => $favoriteTender];
     }
-
 
     public function createAll($tendersData)
     {

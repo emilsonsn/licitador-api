@@ -12,7 +12,7 @@ class FavoriteTender extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    public $table = 'password_recovery';
+    public $table = 'favorite_tenders';
 
     protected $fillable = [
         'tender_id',

@@ -30,7 +30,12 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 
 Route::middleware('jwt', 'user')->group(function(){    
     Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('tender/search', [TenderController::class, 'search']);
+
+    Route::prefix('tender')->group(function(){
+        Route::get('search', [TenderController::class, 'search']);
+        Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);
+
+    });
 
     Route::middleware(AdminMiddleware::class)->group(function(){
 

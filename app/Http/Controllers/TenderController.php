@@ -14,7 +14,6 @@ class TenderController extends Controller
         $this->tenderService = $tenderService;
     }
 
-
     public function search(Request $request){
         $result = $this->tenderService->search($request);
         return $this->response($result);
@@ -26,6 +25,7 @@ class TenderController extends Controller
     }
 
     private function response($result){
+
         return response()->json([
             'status' => $result['status'],
             'message' => $result['message'] ?? null,
