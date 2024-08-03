@@ -14,74 +14,37 @@ class UserController extends Controller
     }
 
     public function search(Request $request){
-        $response = $this->userService->search($request);
+        $result = $this->userService->search($request);
 
-        if($response['status']){
-            return response()->json([
-                'status' => true,
-                'data' => $response['data'],
-                'message' => '',
-            ]);
-        }else{
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'error' => $response['error'],
-            ]);
-        }
+        return $this->response($result);
     }
 
     public function userBlock($user_id){
-        $response = $this->userService->userBlock($user_id);
+        $result = $this->userService->userBlock($user_id);
 
-        if($response['status']){
-            return response()->json([
-                'status' => true,
-                'data' => $response['data'],
-                'message' => 'Bloqueio do usuário alterado com sucesso',
-            ]);
-        }else{
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'error' => $response['error'],
-            ]);
-        }
+        $result['message'] = "Ação realizada com sucesso";
+        return $this->response($result);
     }
 
     public function passwordRecovery(Request $request){
-        $response = $this->userService->requestRecoverPassword($request);
+        $result = $this->userService->requestRecoverPassword($request);
 
-        if($response['status']){
-            return response()->json([
-                'status' => true,
-                'data' => $response['data'],
-                'message' => 'Código de recuperação enviado com sucesso',
-            ]);
-        }else{
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'error' => $response['error'],
-            ]);
-        }
+        $result['message'] = "Email de recuperação enviado com sucesso";
+        return $this->response($result);
     }
 
     public function updatePassword(Request $request){
-        $response = $this->userService->updatePassword($request);
+        $result = $this->userService->updatePassword($request);
+        $result['message'] = "Senha atualizada com sucesso";
+        return $this->response($result);
+    }
 
-        if($response['status']){
-            return response()->json([
-                'status' => true,
-                'data' => $response['data'],
-                'message' => 'Senha recuperada com sucesso',
-            ]);
-        }else{
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'error' => $response['error'],
-            ]);
-        }
+    private function response($result){
+        return response()->json([
+            'status' => $result['status'],
+            'message' => $result['message'] ?? null,
+            'data' => $result['data'] ?? null,
+            'error' => $result['error'] ?? null
+        ]);
     }
 }

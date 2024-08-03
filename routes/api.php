@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TenderController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
 
@@ -29,7 +30,7 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 
 Route::middleware('jwt', 'user')->group(function(){    
     Route::post('logout', [AuthController::class, 'logout']);
-
+    Route::get('tender/search', [TenderController::class, 'search']);
 
     Route::middleware(AdminMiddleware::class)->group(function(){
 
