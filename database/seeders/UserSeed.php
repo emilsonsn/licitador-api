@@ -17,6 +17,8 @@ class UserSeed extends Seeder
             'name' => 'Admin',
             'email' => 'admin@admin',
             'password' => bcrypt('admin'),
+            'is_active' => true,
+            'is_admin' => true
         ]);
     }
 }
