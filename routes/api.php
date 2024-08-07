@@ -41,6 +41,8 @@ Route::middleware('jwt', 'user')->group(function(){
 
         Route::prefix('user')->group(function(){
             Route::get('search', [UserController::class, 'search']);
+            Route::post('create', [UserController::class, 'create']);
+            Route::patch('{id}', [UserController::class, 'update']);
             Route::post('block/{id}', [UserController::class, 'userBlock']);
         });
     

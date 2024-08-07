@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecoveryMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class UserService
 {
@@ -34,6 +35,55 @@ class UserService
         }
     }
 
+    public function create($request)
+    {
+        try {
+            // Definir regras de validação
+            $rules = [
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8',
+            ];
+    
+            $validator = Validator::make($request->all(), $rules);
+    
+            if ($validator->fails()) {
+                return ['status' => false, 'errors' => $validator->errors()];
+            }
+    
+            $user = User::create($validator->validated());
+    
+            return ['status' => true, 'data' => $user];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
+    }
+
+    public function update($request, $user_id)
+    {
+        try {
+            $rules = [
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8',
+            ];
+    
+            $validator = Validator::make($request->all(), $rules);
+    
+            if ($validator->fails()) throw new Exception($validator->errors());
+
+            $userToUpdate = User::find($user_id);
+            
+            if(!isset($userToUpdate)) throw new Exception('usuário não encontrado');
+    
+            $userToUpdate->update($validator->validated());
+    
+            return ['status' => true, 'data' => $userToUpdate];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
+    }
+    
     public function userBlock($user_id)
     {
         try {

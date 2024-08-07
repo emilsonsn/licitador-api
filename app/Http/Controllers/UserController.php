@@ -18,9 +18,23 @@ class UserController extends Controller
 
         return $this->response($result);
     }
+    
+    public function create(Request $request){
+        $result = $this->userService->create($request);
 
-    public function userBlock($user_id){
-        $result = $this->userService->userBlock($user_id);
+        $result['message'] = "Usuário criado com sucesso";
+        return $this->response($result);
+    }
+
+    public function update(Request $request, $id){
+        $result = $this->userService->update($request, $id);
+        
+        $result['message'] = "Usuário atualizado com sucesso";
+        return $this->response($result);
+    }
+
+    public function userBlock($id){
+        $result = $this->userService->userBlock($id);
 
         $result['message'] = "Ação realizada com sucesso";
         return $this->response($result);
