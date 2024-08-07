@@ -13,21 +13,25 @@ class DashboardController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    public function search(Request $request){
-        $response = $this->dashboardService->search($request);
+    public function search(){
+        $result = $this->dashboardService->search();
 
-        if($response['status']){
-            return response()->json([
-                'status' => true,
-                'data' => $response['data'],
-                'message' => '',
-            ]);
-        }else{
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'error' => $response['error'],
-            ]);
-        }
+        $this->response($result);
+    }
+
+
+    public function userGraph(){
+        $result = $this->dashboardService->search();
+        
+        $this->response($result);
+    }
+
+    private function response($result){
+        return response()->json([
+            'status' => $result['status'],
+            'data' => $result['data'] ?? null,
+            'message' => $result['message'] ?? null,
+            'error' => $result['error'] ?? null,
+        ]);
     }
 }

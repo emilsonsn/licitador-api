@@ -48,6 +48,7 @@ Route::middleware('jwt', 'user')->group(function(){
     
         Route::prefix('dashboard')->group(function(){
             Route::get('search', [DashboardController::class, 'search']);
+            Route::get('userGraph', [DashboardController::class, 'userGraph']);
         });
     });
 
