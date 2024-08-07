@@ -17,15 +17,15 @@ class TenderService
             $tenders = Tender::with('favorites');
             $auth = auth()->user();
 
-            if($request->has('favorite')){
+            if($request->input('favorite')){
                 $user_id = $auth->id;
                 $tenders->whereHas('favorites', function($query) use ($user_id) {
                     $query->where('user_id', $user_id);
                 });                
             }
 
-            if ($request->has('modality_ids')) {
-                $modality_ids = $request->has('modality_ids');
+            if ($request->input('modality_ids')) {
+                $modality_ids = explode(',', $request->input('modality_ids'));
                 foreach ($modality_ids as $indice => $modality_id){
                     if(!$indice) $tenders->where('modality_id', $modality_id);
                     else $tenders->orWhere('modality_id', $modality_id);
@@ -33,7 +33,7 @@ class TenderService
             }
 
             // Status: Aberto, Fechado, Aberto-Fechado, Fechado-Aberto
-            if ($request->has('status')) {
+            if ($request->input('status')) {
                 $status = explode(',', $request->input('status'));
                 foreach ($status as $indice => $key){
                     $key =  trim($key);
@@ -43,28 +43,28 @@ class TenderService
             }
 
             // Tem que consegui buscar por cnpj do orgão. Campo: CNPJ do orgão
-            if ($request->has('organ_cnpj')) {
+            if ($request->input('organ_cnpj')) {
                 $tenders->where('organ_cnpj', $request->input('organ_cnpj'));
             }
 
             // Tem que consegui buscar por nome do orgão. Campo: Orgão
-            if ($request->has('organ_name')) {
+            if ($request->input('organ_name')) {
                 $organ_name = $request->input('organ_name');
                 $tenders->where('organ_name', 'LIKE', "%$organ_name%");
             }
             
-            if ($request->has('uf')) {
+            if ($request->input('uf')) {
                 $tenders->where('uf', $request->input('uf'));
             }
 
             // Só aparece se tiver com a UF selecionada
-            if ($request->has('city')) {
+            if ($request->input('city')) {
                 $city = $request->input('city');
                 $tenders->where('city', 'LIKE', "%$city%");
             }
 
             // Campo aberto, será somente um texto, eu vou quebrar o texto por palavras
-            if ($request->has('object')) {
+            if ($request->input('object')) {
                 $object = explode(' ' ,$request->input('object'));
                 foreach($object as $indice => $key){
                     $key =  trim($key);
@@ -74,39 +74,39 @@ class TenderService
             }
 
             // Campo aberto de texto. Campo Nº do Processo
-            if ($request->has('process')) {
+            if ($request->input('process')) {
                 $process = $request->input('process');
                 $tenders->where('process', 'LIKE', "%$process%");
             }
 
             // Campo aberto de texto. Campo Observação
-            if ($request->has('observations')) {
+            if ($request->input('observations')) {
                 $observations = $request->input('observations');
                 $tenders->where('observations', 'LIKE', "%$observations%");
             }
 
-            if ($request->has('proposal_closing_date_start') && $request->has('proposal_closing_date_end')) {
+            if ($request->input('proposal_closing_date_start') && $request->input('proposal_closing_date_end')) {
                 $tenders->whereBetween('proposal_closing_date', [$request->input('proposal_closing_date_start'), $request->input('proposal_closing_date_end')]);
-            }elseif($request->has('publication_date_start')){
+            }elseif($request->input('proposal_closing_date_start')){
                 $tenders->whereDate('proposal_closing_date', '>=', $request->input('proposal_closing_date_start'));
-            }elseif($request->has('publication_date_end')){
+            }elseif($request->input('proposal_closing_date_end')){
                 $tenders->whereDate('proposal_closing_date', '<=', $request->input('proposal_closing_date_end'));            
             }
 
-            if ($request->has('publication_date_start') && $request->has('publication_date_end')) {
+            if ($request->input('publication_date_start') && $request->input('publication_date_end')) {
                 $tenders->whereBetween('publication_date', [$request->input('publication_date_start'), $request->input('publication_date_end')]);
-            }elseif($request->has('publication_date_start')){
+            }elseif($request->input('publication_date_start')){
                 $tenders->whereDate('publication_date', '>=', $request->input('publication_date_start'));
-            }elseif($request->has('publication_date_end')){
+            }elseif($request->input('publication_date_end')){
                 $tenders->whereDate('publication_date', '<=', $request->input('publication_date_end'));
             }
 
             // nome do campo: Data da última atualização
-            if ($request->has('update_date_start') && $request->has('update_date_end')) {
+            if ($request->input('update_date_start') && $request->input('update_date_end')) {
                 $tenders->whereBetween('update_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
-            }elseif($request->has('update_date_start')){
+            }elseif($request->input('update_date_start')){
                 $tenders->whereDate('update_date', '>=', $request->input('update_date_start'));            
-            }elseif($request->has('update_date_end')){
+            }elseif($request->input('update_date_end')){
                 $tenders->whereDate('update_date', '<=', $request->input('update_date_end'));            
             }
 
