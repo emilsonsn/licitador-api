@@ -16,8 +16,8 @@ class TenderService
             $perPage = $request->input('take', 10);
             $tenders = Tender::with('favorites');
             $auth = auth()->user();
-
-            if($request->input('favorite')){
+            
+            if($request->input('favorite') == 'true'){
                 $user_id = $auth->id;
                 $tenders->whereHas('favorites', function($query) use ($user_id) {
                     $query->where('user_id', $user_id);
