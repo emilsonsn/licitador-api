@@ -29,13 +29,13 @@ Route::post('updatePassword', [UserController::class, 'updatePassword']);
 
 Route::get('validateToken', [AuthController::class, 'validateToken']);
 
-Route::middleware('jwt', 'user')->group(function(){    
+Route::middleware('jwt')->group(function(){    
     Route::post('logout', [AuthController::class, 'logout']);
 
     Route::prefix('tender')->group(function(){
         Route::get('search', [TenderController::class, 'search']);
+        Route::get('get-edital/{idLicitacao}', [TenderController::class, 'getEdital']);
         Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);
-
     });
 
     Route::middleware(AdminMiddleware::class)->group(function(){
@@ -56,7 +56,7 @@ Route::middleware('jwt', 'user')->group(function(){
             Route::get('search', [SettingController::class, 'search']);
             Route::get('update', [SettingController::class, 'update']);
         });
-        
+
     });
 
 });

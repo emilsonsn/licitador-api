@@ -15,6 +15,7 @@ class Tender extends Model
     public $table = 'tenders';
 
     protected $fillable = [
+        'id_licitacao',
         'value',
         'modality',
         'modality_id',

@@ -6,11 +6,14 @@ use App\Models\FavoriteTender;
 use App\Models\SystemLog;
 use Exception;
 use App\Models\Tender;
+use App\Traits\PCPTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class TenderService
 {
+
+    use PCPTrait;
     public function search($request)
     {
         try {
@@ -143,6 +146,7 @@ class TenderService
 
             foreach ($tendersData as $tenderData) {
                 $tenders[] = [
+                    'id_licitacao' => null,
                     'value' => $tenderData['valorTotalEstimado'] ?? null,
                     'modality' => $tenderData['modalidadeNome'] ?? null,
                     'modality_id' => $tenderData['modalidadeId'] ?? null,
@@ -195,6 +199,7 @@ class TenderService
 
             foreach ($tendersData as $tenderData) {
                 $tenders[] = [
+                    'id_licitacao' => $tenderData['idLicitacao'],
                     'value' => $tenderData['lotes']['itens'][0]['VL_UNITARIO_ESTIMADO'] ?? null,
                     'modality' => $tenderData['modalidade']['tipoLicitacao'] ?? null,
                     'modality_id' => $tenderData['modalidade']['idTipoLicitacao'] ?? null,
@@ -236,6 +241,24 @@ class TenderService
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
             ]);
+        }
+    }
+
+    public function edital($idLicitacao){
+        try{
+            $result = $this->getEdital($idLicitacao);
+    
+            if(!$result['status']) throw new Exception('Não foi possível obter os editais');
+
+            return ['status' => true, 'data' => $result['data']];
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'edital',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+            return ['status' => false, 'error' => $error->getMessage()];
         }
     }
 
