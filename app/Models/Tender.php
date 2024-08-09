@@ -35,7 +35,8 @@ class Tender extends Model
         'bid_opening_date',
         'proposal_closing_date',
         'publication_date',
-        'update_date       ',
+        'api_origin',
+        'update_date',
     ];
 
     public function favorites(){

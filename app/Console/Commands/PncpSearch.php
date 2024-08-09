@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Routines\RoutinesService;
 use Illuminate\Console\Command;
 
-class TenderSearch extends Command
+class PncpSearch extends Command
 {
 
     
@@ -21,9 +21,10 @@ class TenderSearch extends Command
      *
      * @var string
      */
-    protected $signature = 'app:tender-search';
+    protected $signature = 'app:pncp-search';
 
     /**
+     * 
      * The console command description.
      *
      * @var string

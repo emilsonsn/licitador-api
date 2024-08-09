@@ -6,6 +6,7 @@ use App\Models\FavoriteTender;
 use App\Models\SystemLog;
 use Exception;
 use App\Models\Tender;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class TenderService
@@ -163,6 +164,59 @@ class TenderService
                     'proposal_closing_date' => $tenderData['dataEncerramentoProposta'] ?? null,
                     'publication_date' => $tenderData['dataPublicacaoPncp'] ?? null,
                     'update_date' => $tenderData['dataAtualizacao'] ?? null,
+                    'api_origin' => 'PNCP'
+                ];
+
+                if (count($tenders) >= $batchSize) {
+                    $this->insertBatch($tenders);
+                    $tenders = [];
+                }
+            }
+            
+            if (!empty($tenders)) {
+                $this->insertBatch($tenders);
+            }
+            
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'createAll',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function createAllPCP($tendersData)
+    {
+        try {
+            $tenders = [];
+            $batchSize = 20;
+
+            foreach ($tendersData as $tenderData) {
+                $tenders[] = [
+                    'value' => $tenderData['lotes']['itens'][0]['VL_UNITARIO_ESTIMADO'] ?? null,
+                    'modality' => $tenderData['modalidade']['tipoLicitacao'] ?? null,
+                    'modality_id' => $tenderData['modalidade']['idTipoLicitacao'] ?? null,
+                    'status' => $tenderData['situacao'] ?? null,
+                    'year_purchase' => $tenderData['ANO_LICITACAO'] ?? null,
+                    'number_purchase' => $tenderData['NUMERO'] ?? null,
+                    'organ_cnpj' =>  null,
+                    'organ_name' => $tenderData['unidadeCompradora']['nomeUnidadeCompradora'] ?? null,
+                    'uf' => $tenderData['unidadeCompradora']['UF'] ?? null,
+                    'city' => $tenderData['unidadeCompradora']['Cidade'] ?? null,
+                    'city_code' => $tenderData['unidadeCompradora']['CD_MUNICIPIO_IBGE'] ?? null,
+                    'description' => null,
+                    'object' => $tenderData['DS_OBJETO'] ?? null,
+                    'instrument_name' => null,
+                    'observations' => null,
+                    'origin_url' =>  null,
+                    'process' => $tenderData['NR_PROCESSO'] ?? null,
+                    'bid_opening_date' => isset($tenderData['dataInicioPropostas']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataInicioPropostas'])->format('Y-m-d') : null,
+                    'proposal_closing_date' => isset($tenderData['dataFinalPropostas']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataFinalPropostas'])->format('Y-m-d') : null,
+                    'publication_date' => isset($tenderData['dataPublicacao']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataPublicacao'])->format('Y-m-d') : null,
+                    'update_date' => isset($tenderData['dataPublicacao']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataPublicacao'])->format('Y-m-d') : null,
+                    'api_origin' => 'PCP'
                 ];
 
                 if (count($tenders) >= $batchSize) {

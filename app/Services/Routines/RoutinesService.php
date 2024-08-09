@@ -5,6 +5,7 @@ namespace App\Services\Routines;
 use App\Models\SystemLog;
 use App\Models\User;
 use App\Services\Tender\TenderService;
+use App\Traits\PCPTrait;
 use Exception;
 use App\Traits\PncpTrait;
 use Carbon\Carbon;
@@ -19,7 +20,7 @@ class RoutinesService
         $this->tenderService = $tenderService;
     }
 
-    use PncpTrait;
+    use PncpTrait, PCPTrait;
 
     public function populate_database()
     {
@@ -51,7 +52,7 @@ class RoutinesService
                         'codigoModalidadeContratacao' => $modality
                     ];
 
-                    $result = $this->searchData($data);
+                    $result = $this->searchDataPNCP($data);
 
                     if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
                         sleep(60);
@@ -63,6 +64,43 @@ class RoutinesService
                     sleep(3);
                 }
             }
+                                                                                                                                                                                                                                                                    
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'populate_database',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function populate_database_pcp()
+    {
+        try {
+            $pagina = 1;
+            $first = true;
+
+            while (true){
+                
+                $data = [
+                    'pagina' => $pagina,
+                ];
+                $result = $this->searchDataPCP($data);
+                
+                if($result['status'] && !isset($result['data']) || !count($result['data'])){
+                    sleep(60);
+                    return;
+                }
+
+                if($result['paginaAtual'] === 1 and !$first) return;
+                
+                $this->tenderService->createAllPCP($result['data']);      
+                $pagina+=1;
+                $first = false;
+                sleep(3);
+            }
+            
                                                                                                                                                                                                                                                                     
         } catch (Exception $error) {
             SystemLog::create([

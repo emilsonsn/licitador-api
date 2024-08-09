@@ -4,33 +4,31 @@ namespace App\Traits;
 
 use GuzzleHttp\Client;
 
-trait PncpTrait
+trait PCPTrait
 {
 
-    public function searchDataPNCP($data)
+    public function searchDataPCP($data)
     {
-
         $client = new Client();
-        $url = 'https://pncp.gov.br/api/consulta/v1/contratacoes/proposta';
-
+        $publicKey = env('PUBLIC_KEY');
+        $url = "https://apipcp.portaldecompraspublicas.com.br/publico/processosAbertos";
+        
         try {
             $response = $client->request('GET', $url, [
                 'query' => [
-                    'dataFinal' => $data['dataFinal'],
-                    'codigoModalidadeContratacao' => $data['codigoModalidadeContratacao'] ?? null,
+                    'publicKey' => $publicKey,
                     'pagina' => $data['pagina'],
-                    'tamanhoPagina' => $data['tamanhoPagina'],
                 ]
             ]);
 
             $statusCode = $response->getStatusCode();
             $body = json_decode($response->getBody()->getContents(), true);
 
-            if ($statusCode !== 200 || !isset($body['data']) || !count($body['data'])) {
+            if ($statusCode !== 200 || !isset($body['dadosLicitacoes']) || !count($body['dadosLicitacoes'])) {
                 return ['status' => false, 'error' => 'Não foi possível obter os dados.'];
             } 
 
-            return ['status' => true, 'data' => $body['data']];
+            return ['status' => true, 'data' => $body['dadosLicitacoes'], 'paginaAtual' => $body['paginaAtual']];
 
         } catch (\Exception $e) {
             return ['status' => false, 'error' => $e->getMessage()];
