@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TenderController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
@@ -50,6 +51,12 @@ Route::middleware('jwt', 'user')->group(function(){
             Route::get('search', [DashboardController::class, 'search']);
             Route::get('userGraph', [DashboardController::class, 'userGraph']);
         });
+
+        Route::prefix('setting')->group(function(){
+            Route::get('search', [SettingController::class, 'search']);
+            Route::get('update', [SettingController::class, 'update']);
+        });
+        
     });
 
 });
