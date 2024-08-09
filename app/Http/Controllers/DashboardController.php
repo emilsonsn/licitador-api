@@ -20,8 +20,8 @@ class DashboardController extends Controller
     }
 
 
-    public function userGraph(){
-        $result = $this->dashboardService->search();
+    public function userGraph(Request $request){
+        $result = $this->dashboardService->userGraph($request);
         
         $this->response($result);
     }
