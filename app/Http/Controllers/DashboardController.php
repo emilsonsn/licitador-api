@@ -16,14 +16,14 @@ class DashboardController extends Controller
     public function search(){
         $result = $this->dashboardService->search();
 
-        $this->response($result);
+        return $this->response($result);
     }
 
 
     public function userGraph(Request $request){
         $result = $this->dashboardService->userGraph($request);
         
-        $this->response($result);
+        return $this->response($result);
     }
 
     private function response($result){
