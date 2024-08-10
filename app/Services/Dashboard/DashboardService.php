@@ -2,14 +2,13 @@
 
 namespace App\Services\Dashboard;
 
+use App\Models\Tender;
 use App\Models\User;
 use Exception;
-use App\Models\Tender;
 
 class DashboardService
 {
-
-    public function search()
+    public function search(): array
     {
         try {
             $totalUsers = User::where('is_admin', false)->count();
@@ -20,11 +19,10 @@ class DashboardService
             $totalActiveUsers = User::where('is_admin', false)
                 ->where('is_active', true)
                 ->count();
-            
+
             $totalInactiveUsers = User::where('is_admin', false)
                 ->where('is_active', false)
                 ->count();
-
 
             $totalTenders = Tender::count();
             $totalMonthTenders = Tender::whereMonth('created_at', now()->month)
@@ -33,40 +31,37 @@ class DashboardService
             $data = [
                 'totalUsers' => $totalUsers,
                 'totalMonthUsers' => $totalMonthUsers,
-                
                 'totalActiveUsers' => $totalActiveUsers,
                 'totalInactiveUsers' => $totalInactiveUsers,
-
                 'totalTenders' => $totalTenders,
                 'totalMonthTenders' => $totalMonthTenders,
             ];
 
             return ['status' => true, 'data' => $data];
         } catch (Exception $error) {
-            return ['status' => false, 'error' => $error->getMessage()];
+            // Log the error message for debugging
+            \Log::error('Search failed: ' . $error->getMessage());
+            return ['status' => false, 'error' => 'An error occurred while retrieving data.'];
         }
     }
 
-    public function userGraph($request)
+    public function userGraph($request): array
     {
         try {
             $users = User::where('is_admin', false);
-            $period = $request->period ?? 'monthly'; 
+            $period = $request->input('period', 'monthly');
 
-            switch ($period) {
-                case 'all':
-                    break;
-                case 'monthly':
-                    $users->whereMonth('created_at', now()->month);
-                    break;
+            if ($period === 'monthly') {
+                $users->whereMonth('created_at', now()->month);
             }
 
             $users = $users->get(['name', 'created_at']);
 
-            return ['status'=> true, 'data' => $users];
-            
+            return ['status' => true, 'data' => $users];
         } catch (Exception $error) {
-            return ['status' => false, 'error' => $error->getMessage()];
+            // Log the error message for debugging
+            \Log::error('User graph retrieval failed: ' . $error->getMessage());
+            return ['status' => false, 'error' => 'An error occurred while retrieving user data.'];
         }
     }
 }
