@@ -3,30 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Services\Dashboard\DashboardService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    private $dashboardService;
+    private DashboardService $dashboardService;
 
-    public function __construct(DashboardService $dashboardService) {
+    public function __construct(DashboardService $dashboardService)
+    {
         $this->dashboardService = $dashboardService;
     }
 
-    public function search(){
+    public function search(): JsonResponse
+    {
         $result = $this->dashboardService->search();
-
-        return $this->response($result);
+        return $this->formatResponse($result);
     }
 
+    public function userGraph(Request $request): JsonResponse
+    {
+        $request->validate([
+            'period' => 'sometimes|in:all,monthly'
+        ]);
 
-    public function userGraph(Request $request){
         $result = $this->dashboardService->userGraph($request);
-        
-        return $this->response($result);
+        return $this->formatResponse($result);
     }
 
-    private function response($result){
+    private function formatResponse(array $result): JsonResponse
+    {
         return response()->json([
             'status' => $result['status'],
             'data' => $result['data'] ?? null,
