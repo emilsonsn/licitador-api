@@ -39,6 +39,7 @@ class UserService
     {
         try {
             $user = auth()->user();
+            $user->makeVisible('is_admin');
 
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {
@@ -56,15 +57,15 @@ class UserService
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8',
             ];
-    
+
             $validator = Validator::make($request->all(), $rules);
-    
+
             if ($validator->fails()) {
                 return ['status' => false, 'errors' => $validator->errors()];
             }
-    
+
             $user = User::create($validator->validated());
-    
+
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
@@ -79,23 +80,23 @@ class UserService
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8',
             ];
-    
+
             $validator = Validator::make($request->all(), $rules);
-    
+
             if ($validator->fails()) throw new Exception($validator->errors());
 
             $userToUpdate = User::find($user_id);
-            
+
             if(!isset($userToUpdate)) throw new Exception('usuário não encontrado');
-    
+
             $userToUpdate->update($validator->validated());
-    
+
             return ['status' => true, 'data' => $userToUpdate];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
         }
     }
-    
+
     public function userBlock($user_id)
     {
         try {
@@ -148,11 +149,11 @@ class UserService
         try{
             $code = $request->code;
             $password = $request->password;
-            
+
             $recovery = PasswordRecovery::orderBy('id', 'desc')->where('code', $code)->first();
-    
+
             if(!$recovery) throw new Exception('Código enviado não é válido.');
-    
+
             $user = User::find($recovery->user_id);
             $user->password = Hash::make($password);
             $user->save();
