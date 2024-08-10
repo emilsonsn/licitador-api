@@ -18,6 +18,12 @@ class UserController extends Controller
 
         return $this->response($result);
     }
+
+    public function getUser(){
+        $result = $this->userService->getUser();
+
+        return $this->response($result);
+    }
     
     public function create(Request $request){
         $result = $this->userService->create($request);

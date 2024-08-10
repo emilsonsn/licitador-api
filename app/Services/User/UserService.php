@@ -35,6 +35,18 @@ class UserService
         }
     }
 
+    public function getUser()
+    {
+        try {
+            $user = auth()->user();
+
+            return ['status' => true, 'data' => $user];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
+    }
+
+
     public function create($request)
     {
         try {
