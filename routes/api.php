@@ -34,7 +34,7 @@ Route::middleware('jwt')->group(function(){
 
     Route::prefix('tender')->group(function(){
         Route::get('search', [TenderController::class, 'search']);
-        Route::get('get-edital/{idLicitacao}', [TenderController::class, 'getEdital']);
+        Route::get('get-edital/{idLicitacao}', [TenderController::class, 'edital']);
         Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);
     });
 

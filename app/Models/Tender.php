@@ -22,6 +22,7 @@ class Tender extends Model
         'status',
         'year_purchase',
         'number_purchase',
+        'sequential_purchase',
         'organ_cnpj',
         'organ_name',
         'uf',

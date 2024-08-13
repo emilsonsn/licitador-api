@@ -24,7 +24,7 @@ class TenderController extends Controller
         return $this->response($result);
     }
 
-    public function getEdital($idLicitacao){
+    public function edital($idLicitacao){
         $result = $this->tenderService->edital($idLicitacao);
         return $this->response($result);
     }

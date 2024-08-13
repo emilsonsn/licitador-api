@@ -35,7 +35,7 @@ trait PCPTrait
         }
     }
 
-    public function getEdital($idLicitacao)
+    public function getEditalPCP($idLicitacao)
     {
         $client = new Client();
         $publicKey = env('PUBLIC_KEY');
@@ -63,5 +63,4 @@ trait PCPTrait
         }
     }
 
-    
 }

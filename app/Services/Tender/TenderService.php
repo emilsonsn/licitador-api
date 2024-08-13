@@ -7,13 +7,14 @@ use App\Models\SystemLog;
 use Exception;
 use App\Models\Tender;
 use App\Traits\PCPTrait;
+use App\Traits\PncpTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class TenderService
 {
 
-    use PCPTrait;
+    use PCPTrait, PncpTrait;
     public function search($request)
     {
         try {
@@ -153,6 +154,7 @@ class TenderService
                     'status' => $tenderData['modoDisputaNome'] ?? null,
                     'year_purchase' => $tenderData['anoCompra'] ?? null,
                     'number_purchase' => $tenderData['numeroCompra'] ?? null,
+                    'sequential_purchase' => $tenderData['sequencialCompra'] ?? null,
                     'organ_cnpj' => $tenderData['orgaoEntidade']['cnpj'] ?? null,
                     'organ_name' => $tenderData['orgaoEntidade']['razaoSocial'] ?? null,
                     'uf' => $tenderData['unidadeOrgao']['ufSigla'] ?? null,
@@ -206,6 +208,7 @@ class TenderService
                     'status' => $tenderData['situacao'] ?? null,
                     'year_purchase' => $tenderData['ANO_LICITACAO'] ?? null,
                     'number_purchase' => $tenderData['NUMERO'] ?? null,
+                    'sequential_purchase' => null,
                     'organ_cnpj' =>  null,
                     'organ_name' => $tenderData['unidadeCompradora']['nomeUnidadeCompradora'] ?? null,
                     'uf' => $tenderData['unidadeCompradora']['UF'] ?? null,
@@ -246,11 +249,23 @@ class TenderService
 
     public function edital($idLicitacao){
         try{
-            $result = $this->getEdital($idLicitacao);
+            $tender = Tender::find($idLicitacao);
+
+            $editais = [];
+
+            if($tender->api_origin == 'PNCP'){
+                $result = $this->getEditalPNCP($tender->organ_cnpj, $tender->year_purchase, $tender->sequential_purchase);
+            }else if($tender->api_origin == 'PCP'){
+                $result = $this->getEditalPCP($idLicitacao);
+            }
+
+            foreach($result as $edital){
+                $editais[] = $edital['url'];
+            }
     
             if(!$result['status']) throw new Exception('Não foi possível obter os editais');
 
-            return ['status' => true, 'data' => $result['data']];
+            return ['status' => true, 'data' => $editais];
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'edital',
