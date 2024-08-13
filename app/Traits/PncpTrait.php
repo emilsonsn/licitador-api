@@ -40,7 +40,7 @@ trait PncpTrait
     public function getEditalPNCP($cnpj, $ano, $sequencial)
     {
         $client = new Client();
-        $url = "https://pncp.gov.br/api/v1/orgaos/{$cnpj}/compras/{$ano}/{$sequencial}/arquivos";
+        $url = "https://pncp.gov.br/api/pncp/v1/orgaos/{$cnpj}/compras/{$ano}/{$sequencial}/arquivos";
 
         try {
             $response = $client->request('GET', $url, ['query' => []]);

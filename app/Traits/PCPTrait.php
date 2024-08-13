@@ -50,7 +50,8 @@ trait PCPTrait
             ]);
 
             $statusCode = $response->getStatusCode();
-            $body = json_decode($response->getBody()->getContents(), true);
+            $bodyContent = $response->getBody()->getContents();
+            $body = json_decode($bodyContent, true);
 
             if ($statusCode !== 200 || !isset($body['documentosFs']) || !count($body['documentosFs'])) {
                 return ['status' => false, 'error' => 'Não foi possível obter os dados.'];

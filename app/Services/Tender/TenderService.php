@@ -256,14 +256,16 @@ class TenderService
             if($tender->api_origin == 'PNCP'){
                 $result = $this->getEditalPNCP($tender->organ_cnpj, $tender->year_purchase, $tender->sequential_purchase);
             }else if($tender->api_origin == 'PCP'){
-                $result = $this->getEditalPCP($idLicitacao);
+                $result = $this->getEditalPCP($tender->id_licitacao);
+            }else{
+                $result = ['data' => []];
             }
 
-            foreach($result as $edital){
+            foreach($result['data'] as $edital){
                 $editais[] = $edital['url'];
             }
     
-            if(!$result['status']) throw new Exception('Não foi possível obter os editais');
+            if(!isset($result['status'])) throw new Exception('Não foi possível obter editais para esse registro');
 
             return ['status' => true, 'data' => $editais];
         } catch (Exception $error) {
