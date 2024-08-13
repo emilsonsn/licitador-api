@@ -29,7 +29,7 @@ Route::post('updatePassword', [UserController::class, 'updatePassword']);
 
 Route::get('validateToken', [AuthController::class, 'validateToken']);
 
-Route::middleware('jwt')->group(function(){    
+Route::middleware('jwt')->group(function(){
     Route::post('logout', [AuthController::class, 'logout']);
 
     Route::prefix('tender')->group(function(){
@@ -47,7 +47,7 @@ Route::middleware('jwt')->group(function(){
             Route::patch('{id}', [UserController::class, 'update']);
             Route::post('block/{id}', [UserController::class, 'userBlock']);
         });
-    
+
         Route::prefix('dashboard')->group(function(){
             Route::get('search', [DashboardController::class, 'search']);
             Route::get('userGraph', [DashboardController::class, 'userGraph']);
@@ -55,7 +55,7 @@ Route::middleware('jwt')->group(function(){
 
         Route::prefix('setting')->group(function(){
             Route::get('search', [SettingController::class, 'search']);
-            Route::get('update', [SettingController::class, 'update']);
+            Route::patch('update', [SettingController::class, 'update']);
         });
 
     });
