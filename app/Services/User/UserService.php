@@ -39,7 +39,6 @@ class UserService
     {
         try {
             $user = auth()->user();
-            $user->makeVisible('is_admin');
 
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {
