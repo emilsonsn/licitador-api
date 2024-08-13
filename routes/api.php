@@ -38,11 +38,14 @@ Route::middleware('jwt')->group(function(){
         Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);
     });
 
+    Route::get('user/getUser', [UserController::class, 'getUser']);
+
+    Route::get('setting/search', [SettingController::class, 'search']);
+
     Route::middleware(AdminMiddleware::class)->group(function(){
 
         Route::prefix('user')->group(function(){
             Route::get('search', [UserController::class, 'search']);
-            Route::get('getUser', [UserController::class, 'getUser']);
             Route::post('create', [UserController::class, 'create']);
             Route::patch('{id}', [UserController::class, 'update']);
             Route::post('block/{id}', [UserController::class, 'userBlock']);
@@ -53,10 +56,7 @@ Route::middleware('jwt')->group(function(){
             Route::get('userGraph', [DashboardController::class, 'userGraph']);
         });
 
-        Route::prefix('setting')->group(function(){
-            Route::get('search', [SettingController::class, 'search']);
-            Route::patch('update', [SettingController::class, 'update']);
-        });
+        Route::patch('setting/update', [SettingController::class, 'update']);
 
     });
 
