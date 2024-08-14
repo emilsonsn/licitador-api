@@ -78,6 +78,7 @@ class RoutinesService
     public function populate_database_pcp()
     {
         try {
+            Log::info('Iniciando PCP');
             $pagina = 1;
             $first = true;
 
@@ -89,12 +90,20 @@ class RoutinesService
                 $result = $this->searchDataPCP($data);
                 
                 if($result['status'] && !isset($result['data']) || !count($result['data'])){
+                    Log::error('Data vázia: PCP');
+                    SystemLog::create([
+                        'action' => 'data not found',
+                        'file' => '',
+                        'line' => 0,
+                        'error' => $result['data'],
+                    ]);
                     sleep(60);
                     return;
                 }
 
                 if($result['paginaAtual'] === 1 and !$first) return;
                 
+                Log::info('Criando registros: PCP');
                 $this->tenderService->createAllPCP($result['data']);      
                 $pagina+=1;
                 $first = false;
@@ -103,6 +112,7 @@ class RoutinesService
             
                                                                                                                                                                                                                                                                     
         } catch (Exception $error) {
+            Log::info($error->getMessage());
             SystemLog::create([
                 'action' => 'populate_database',
                 'file' => $error->getFile(),
