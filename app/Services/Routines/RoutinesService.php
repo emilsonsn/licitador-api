@@ -25,22 +25,25 @@ class RoutinesService
     public function populate_database()
     {
         try {
+            Log::info('Iniciando PCNP');
 
             $modalitys = [
                 1,  // Leilão - Eletrônico
+                6,  // Pregão - Eletrônico
+                7,  // Pregão - Presencial
+                13, //Leilão - Presencial
                 2,  // Diálogo Competitivo
                 3,  // Concurso
                 4,  // Concorrência - Eletrônica
                 5,  // Concorrência - Presencial
-                6,  // Pregão - Eletrônico
-                7,  // Pregão - Presencial
                 8,  // Dispensa de Licitação
                 9,  // Inexigibilidade
                 10, //M anifestação de Interesse
                 11, //P ré-qualificação
                 12, //Credenciamento
-                13, //Leilão - Presencial
             ];
+
+            shuffle($modalitys);
 
             foreach($modalitys as $modality ){
                 $pagina = 1;
@@ -55,6 +58,13 @@ class RoutinesService
                     $result = $this->searchDataPNCP($data);
 
                     if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                        Log::error('Data vázia: PNCP');
+                        SystemLog::create([
+                            'action' => 'data not found PNCP',
+                            'file' => '',
+                            'line' => 0,
+                            'error' => $result['data'],
+                        ]);
                         sleep(60);
                         break;
                     }
@@ -66,6 +76,7 @@ class RoutinesService
             }
                                                                                                                                                                                                                                                                     
         } catch (Exception $error) {
+            Log::error($error->getMessage());
             SystemLog::create([
                 'action' => 'populate_database',
                 'file' => $error->getFile(),
@@ -92,7 +103,7 @@ class RoutinesService
                 if($result['status'] && !isset($result['data']) || !count($result['data'])){
                     Log::error('Data vázia: PCP');
                     SystemLog::create([
-                        'action' => 'data not found',
+                        'action' => 'data not found PCP',
                         'file' => '',
                         'line' => 0,
                         'error' => $result['data'],

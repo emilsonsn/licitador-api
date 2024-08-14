@@ -12,8 +12,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('app:pcp-search')->everyFourHours();
-        $schedule->command('app:pncp-search')->everyFourHours();
+        //para rodar todo dia às 23 horas
+        $schedule->command('app:pcp-search')->dailyAt('23:00');
+        $schedule->command('app:pncp-search')->everyTwoHours();
     }
 
     /**
