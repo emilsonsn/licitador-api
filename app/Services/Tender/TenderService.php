@@ -64,8 +64,8 @@ class TenderService
 
             // Só aparece se tiver com a UF selecionada
             if ($request->input('city')) {
-                $city = $request->input('city');
-                $tenders->where('city', 'LIKE', "%$city%");
+                $citys = explode(' ' ,$request->input('city'));
+                $tenders->whereIn('city', $citys);
             }
 
             // Campo aberto, será somente um texto, eu vou quebrar o texto por palavras

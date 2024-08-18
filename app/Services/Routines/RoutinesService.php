@@ -27,54 +27,36 @@ class RoutinesService
         try {
             Log::info('Iniciando PCNP');
 
-            $modalitys = [
-                1,  // Leilão - Eletrônico
-                6,  // Pregão - Eletrônico
-                7,  // Pregão - Presencial
-                13, //Leilão - Presencial
-                2,  // Diálogo Competitivo
-                3,  // Concurso
-                4,  // Concorrência - Eletrônica
-                5,  // Concorrência - Presencial
-                8,  // Dispensa de Licitação
-                9,  // Inexigibilidade
-                10, //M anifestação de Interesse
-                11, //P ré-qualificação
-                12, //Credenciamento
-            ];
+            $modalitys = $this->getModality();
+            $ufs = $this->getUfs();
 
-            shuffle($modalitys);
-
-            foreach($modalitys as $modality ){
-                $pagina = 1;
-                while (true){
-                    $data = [
-                        'dataFinal' => Carbon::now()->addYear()->format('Ymd'),
-                        'pagina' => $pagina,
-                        'tamanhoPagina' => 20,
-                        'codigoModalidadeContratacao' => $modality
-                    ];
-
-                    $result = $this->searchDataPNCP($data);
-
-                    if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                        Log::error('Data vázia: PNCP');
-                        SystemLog::create([
-                            'action' => 'data not found PNCP',
-                            'file' => '',
-                            'line' => 0,
-                            'error' => $result['data'],
-                        ]);
-                        sleep(60);
-                        break;
+            foreach($ufs as $uf){
+                foreach($modalitys as $modality ){
+                    $pagina = 1;
+                    while (true){
+                        $data = [
+                            'dataFinal' => Carbon::now()->addYear()->format('Ymd'),
+                            'pagina' => $pagina,
+                            'tamanhoPagina' => 20,
+                            'uf' => $uf,
+                            'codigoModalidadeContratacao' => $modality
+                        ];
+    
+                        $result = $this->searchDataPNCP($data);
+    
+                        if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                            Log::error('Data vázia: PNCP');
+                            sleep(10);
+                            break;
+                        }
+    
+                        $this->tenderService->createAll($result['data']);                    
+                        $pagina+=1;
+                        sleep(3);
                     }
-
-                    $this->tenderService->createAll($result['data']);                    
-                    $pagina+=1;
-                    sleep(3);
                 }
             }
-                                                                                                                                                                                                                                                                    
+                                                                                                
         } catch (Exception $error) {
             Log::error($error->getMessage());
             SystemLog::create([
@@ -131,6 +113,36 @@ class RoutinesService
                 'error' => $error->getMessage(),
             ]);
         }
+    }
+
+    private function getModality() : array {
+        $modalitys = [
+            1,  // Leilão - Eletrônico
+            2,  // Diálogo Competitivo
+            3,  // Concurso
+            4,  // Concorrência - Eletrônica
+            5,  // Concorrência - Presencial
+            6,  // Pregão - Eletrônico
+            7,  // Pregão - Presencial
+            13, //Leilão - Presencial
+            8,  // Dispensa de Licitação
+            9,  // Inexigibilidade
+            10, //M anifestação de Interesse
+            11, //P ré-qualificação
+            12, //Credenciamento
+        ];
+        shuffle($modalitys);
+        return $modalitys;
+    }
+
+    private function getUfs() : array {
+        $ufs = [
+            'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+            'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+            'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+        ];
+        shuffle($ufs);
+        return $ufs;
     }
 
 }

@@ -13,8 +13,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         //para rodar todo dia às 23 horas
-        $schedule->command('app:pcp-search')->dailyAt('23:00');
-        $schedule->command('app:pncp-search')->everyTwoHours();
+        $schedule->command('app:pcp-search')->withoutOverlapping()->dailyAt('23:00');
+        $schedule->command('app:pncp-search')->withoutOverlapping()->everyThreeHours();
     }
 
     /**
