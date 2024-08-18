@@ -117,26 +117,23 @@ class UserService
         try {
             $email = $request->email;
             $user = User::where('email', $email)->first();
+                
+            if (!isset($user)) throw new Exception('Usuário não encontrado.');
+            
+            $code = bin2hex(random_bytes(10));
 
-            if ($user) {
-                $code = bin2hex(random_bytes(10));
-                $recovery = PasswordRecovery::create([
-                    'code' => $code,
-                    'user_id' => $user->id
-                ]);
+            $recovery = PasswordRecovery::create([
+                'code' => $code,
+                'user_id' => $user->id
+            ]);
 
-                if (!$recovery) {
-                    throw new Exception('Erro ao tentar recuperar senha');
-                }
-
-                Mail::to($email)->send(new PasswordRecoveryMail($code));
-
-                return ['status' => true, 'data' => $user];
-            } else {
-                throw new Exception('Usuário não encontrado.');
+            if (!$recovery) {
+                throw new Exception('Erro ao tentar recuperar senha');
             }
 
-            return ['status' => true];
+            Mail::to($email)->send(new PasswordRecoveryMail($code));
+            return ['status' => true, 'data' => $user];
+
         } catch (Exception $error) {
             Log::error('Erro na recuperação de senha: ' . $error->getMessage());
             return ['status' => false, 'error' => $error->getMessage()];
