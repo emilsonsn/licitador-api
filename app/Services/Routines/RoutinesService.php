@@ -46,13 +46,11 @@ class RoutinesService
     
                         if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
                             Log::error('Data vázia: PNCP');
-                            sleep(10);
                             break;
                         }
     
                         $this->tenderService->createAll($result['data']);                    
                         $pagina+=1;
-                        sleep(3);
                     }
                 }
             }
