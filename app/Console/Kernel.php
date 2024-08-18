@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
     {
         //para rodar todo dia às 23 horas
         $schedule->command('app:pcp-search')->withoutOverlapping()->dailyAt('23:00');
-        $schedule->command('app:pncp-search')->withoutOverlapping()->everyThreeHours();
+        $schedule->command('app:pncp-search')->withoutOverlapping()->hourly();
     }
 
     /**
