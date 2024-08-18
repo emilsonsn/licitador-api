@@ -6,19 +6,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class PasswordRecoveryMail extends Mailable
+class WelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $email;
     public $name;
+    public $email;
     public $password;
 
 
     /**
      * Create a new message instance.
      */
-    public function __construct($email, $name, $password)
+    public function __construct($name, $email, $password)
     {
         $this->name = $name;
         $this->email = $email;

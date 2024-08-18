@@ -129,7 +129,7 @@ class UserService
                     throw new Exception('Erro ao tentar recuperar senha');
                 }
 
-                $mail = Mail::to('emilsonsn2@gmail.com')->send(new PasswordRecoveryMail($code));
+                Mail::to($email)->send(new PasswordRecoveryMail($code));
 
                 return ['status' => true, 'data' => $user];
             } else {

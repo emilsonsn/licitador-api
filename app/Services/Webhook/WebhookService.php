@@ -2,10 +2,12 @@
 
 namespace App\Services\Webhook;
 
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class WebhookService
 {
@@ -13,7 +15,7 @@ class WebhookService
     public function handle($request)
     {
         try {
-            $event = $request->input('event', 10);
+            $event = $request->input('event');
 
             if(!isset($event)) throw new Exception('Invalid event');
 
@@ -38,15 +40,27 @@ class WebhookService
     {
         try {
             $buyer = $request->data->buyer;
-            $password = Str::random(10);
 
-            $user = User::create([
-                'name' => $buyer->name,
-                'email' => $buyer->email,
-                'password' => Hash::make($password),
-                'is_admin' => false,
-                'is_active' => true,
-            ]);
+            $user = User::where('email', $buyer->email)->first();
+
+            if(isset($user)){
+                $user->update([
+                    'is_active' => true
+                ]);        
+
+            }else{
+                $password = Str::random(10);
+    
+                $user = User::create([
+                    'name' => $buyer->name,
+                    'email' => $buyer->email,
+                    'password' => Hash::make($password),
+                    'is_admin' => false,
+                    'is_active' => true,
+                ]);
+
+                Mail::to($user->email)->send(new WelcomeMail($user->name, $user->email, $password));
+            }
 
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {

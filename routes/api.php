@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TenderController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\AdminMiddleware;
 
 /*
@@ -59,5 +60,8 @@ Route::middleware('jwt')->group(function(){
         Route::patch('setting/update', [SettingController::class, 'update']);
 
     });
+});
 
+Route::prefix('webhook')->group(function() {
+    Route::post('hotmart', [WebhookController::class, 'handle']);
 });
