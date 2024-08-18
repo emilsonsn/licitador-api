@@ -119,7 +119,7 @@ class TenderService
                 $tenders->whereDate('update_date', '<=', $request->input('update_date_end'));            
             }
 
-            $tenders = $tenders->paginate($perPage);
+            $tenders = $tenders->paginate($perPage)->appends($request->query());
 
             return ['status' => true, 'data' => $tenders];
         } catch (Exception $error) {
