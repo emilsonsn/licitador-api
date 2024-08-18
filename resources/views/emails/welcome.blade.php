@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperação de Senha</title>
+    <title>Bem-vindo</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,11 +52,12 @@
 
 <body>
     <div class="email-container">
-        <h1>Recuperação de Senha</h1>
-        <p>Olá,</p>
-        <p>Você solicitou a recuperação de senha. Use o botão abaixo para redefinir sua senha:</p>
-        <p><a href="{{env('FRONT_URL') . '/password_recovery?code=' . $code }}">Recuperar Senha</a></p>
-        <p>Se você não solicitou essa recuperação, por favor ignore este e-mail.</p>
+        <h1>Bem-vindo, {{ $name }}!</h1>
+        <p>Estamos felizes em tê-lo conosco. Aqui estão os seus detalhes de acesso:</p>
+        <p><strong>Email:</strong> {{ $email }}</p>
+        <p><strong>Senha Temporária:</strong> {{ $password }}</p>
+        <p>Recomendamos que você altere sua senha após o primeiro login para garantir a segurança da sua conta.</p>
+        <p><a href="{{ env('FRONT_URL') . '/login' }}">Clique aqui para fazer login</a></p>
         <div class="footer">
             <p>© {{ date('Y') }} Localizadordeeditais. Todos os direitos reservados.</p>
         </div>

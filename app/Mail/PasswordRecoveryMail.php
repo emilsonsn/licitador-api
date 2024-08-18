@@ -33,7 +33,8 @@ class PasswordRecoveryMail extends Mailable
         return $this->view('emails.password_recovery')
                     ->with([
                         'code' => $this->code,
-                    ]);
+                    ])
+                    ->subject('Recuperação de senha');
     }
 
 }
