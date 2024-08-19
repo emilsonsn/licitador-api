@@ -85,6 +85,4 @@ class WebhookService
             return ['status' => false, 'error' => $error->getMessage()];
         }
     }
-
-    
 }
