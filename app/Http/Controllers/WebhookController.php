@@ -16,6 +16,6 @@ class WebhookController extends Controller
     public function handle(Request $request){
         $result = $this->webhookService->handle($request);
 
-        return $this->response($result);
+        return response()->json(['status'=> true, 'data' => $result]);
     }
 }

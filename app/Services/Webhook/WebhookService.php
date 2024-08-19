@@ -39,9 +39,9 @@ class WebhookService
     public function createUser($request)
     {
         try {
-            $buyer = $request->data->buyer;
+            $buyer = $request['data']['buyer'];
 
-            $user = User::where('email', $buyer->email)->first();
+            $user = User::where('email', $buyer['email'])->first();
 
             if(isset($user)){
                 $user->update([
@@ -52,8 +52,8 @@ class WebhookService
                 $password = Str::random(10);
     
                 $user = User::create([
-                    'name' => $buyer->name,
-                    'email' => $buyer->email,
+                    'name' => $buyer['name'],
+                    'email' => $buyer['email'],
                     'password' => Hash::make($password),
                     'is_admin' => false,
                     'is_active' => true,
@@ -71,7 +71,7 @@ class WebhookService
     public function blockUser($request)
     {
         try {
-            $email = $request->data->buyer->email;
+            $email = $request['data']['buyer']['email'];
 
             $user = User::where('email', $email)
                 ->first();
