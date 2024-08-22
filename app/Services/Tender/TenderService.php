@@ -20,6 +20,11 @@ class TenderService
         try {
             $perPage = $request->input('take', 10);
             $tenders = Tender::with('favorites');
+            $orderField = $reqiest->orderField ?? 'proposal_closing_date';
+            $order = $reqiest->order ?? 'desc';
+            
+            $tenders->orderBy($orderField, $order);
+
             $auth = auth()->user();
             
             if($request->input('favorite') == 'true'){
