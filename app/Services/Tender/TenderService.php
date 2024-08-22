@@ -117,11 +117,11 @@ class TenderService
 
             // nome do campo: Data da última atualização
             if ($request->input('update_date_start') && $request->input('update_date_end')) {
-                $tenders->whereBetween('update_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
+                $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
             }elseif($request->input('update_date_start')){
-                $tenders->whereDate('update_date', '>=', $request->input('update_date_start'));            
+                $tenders->whereDate('proposal_closing_date', '>=', $request->input('update_date_start'));            
             }elseif($request->input('update_date_end')){
-                $tenders->whereDate('update_date', '<=', $request->input('update_date_end'));            
+                $tenders->whereDate('proposal_closing_date', '<=', $request->input('update_date_end'));            
             }
 
             $tenders = $tenders->paginate($perPage)->appends($request->query());
