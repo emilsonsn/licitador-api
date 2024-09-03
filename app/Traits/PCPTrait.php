@@ -6,17 +6,21 @@ use GuzzleHttp\Client;
 
 trait PCPTrait
 {
+    public function prepareData(){
+        $this->baseUrl = "https://apipcp.portaldecompraspublicas.com.br/publico";
+        $this->client = new Client();
+        $this->publicKey = env('PUBLIC_KEY');
+    }
 
     public function searchDataPCP($data)
     {
-        $client = new Client();
-        $publicKey = env('PUBLIC_KEY');
-        $url = "https://apipcp.portaldecompraspublicas.com.br/publico/processosAbertos";
-        
         try {
-            $response = $client->request('GET', $url, [
+            $this->prepareData();
+            $url = $this->baseUrl . "/processosAbertos";
+
+            $response = $this->client->request('GET', $url, [
                 'query' => [
-                    'publicKey' => $publicKey,
+                    'publicKey' => $this->publicKey,
                     'pagina' => $data['pagina'],
                 ]
             ]);
@@ -36,15 +40,14 @@ trait PCPTrait
     }
 
     public function getEditalPCP($idLicitacao)
-    {
-        $client = new Client();
-        $publicKey = env('PUBLIC_KEY');
-        $url = "https://apipcp.portaldecompraspublicas.com.br/publico/obteranexoslicitacao";
-        
+    {    
         try {
-            $response = $client->request('GET', $url, [
+            $this->prepareData();
+            $url = $this->baseUrl . "/obteranexoslicitacao";
+
+            $response = $this->client->request('GET', $url, [
                 'query' => [
-                    'publicKey' => $publicKey,
+                    'publicKey' => $this->publicKey,
                     'idLicitacao' => $idLicitacao,
                 ]
             ]);
@@ -58,6 +61,34 @@ trait PCPTrait
             } 
 
             return ['status' => true, 'data' => $body['documentosFs']];
+
+        } catch (\Exception $e) {
+            return ['status' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    public function getItemPCP($idLicitacao)
+    {
+        try {
+            $this->prepareData();
+            $url = $this->baseUrl . "/obterItensEmDisputa";
+
+            $response = $this->client->request('GET', $url, [
+                'query' => [
+                    'publicKey' => $this->publicKey,
+                    'idLicitacao' => $idLicitacao,
+                ]
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $bodyContent = $response->getBody()->getContents();
+            $body = json_decode($bodyContent, true);
+
+            if ($statusCode !== 200 || isset($body['success'])) {
+                return ['status' => false, 'error' => 'Não foi possível obter os dados.'];
+            } 
+
+            return ['status' => true, 'data' => $body];
 
         } catch (\Exception $e) {
             return ['status' => false, 'error' => $e->getMessage()];

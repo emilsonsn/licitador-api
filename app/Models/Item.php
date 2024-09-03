@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Item extends Model
+{
+    use HasFactory;
+
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+    public $table = 'items';
+
+    protected $fillable = [
+        'tender_id',
+        'description',
+    ];
+
+    public function tender(){
+        return $this->belongsTo(Tender::class);
+    }
+ 
+}

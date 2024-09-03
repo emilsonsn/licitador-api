@@ -37,6 +37,10 @@ Route::middleware('jwt')->group(function(){
         Route::get('search', [TenderController::class, 'search']);
         Route::get('get-edital/{idLicitacao}', [TenderController::class, 'edital']);
         Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);
+
+        Route::post('note', [TenderController::class, 'note']);
+        Route::delete('note-delete/{note_id}', [TenderController::class, 'noteDelete']);
+
     });
 
     Route::get('user/getUser', [UserController::class, 'getUser']);

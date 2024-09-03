@@ -2,7 +2,10 @@
 
 namespace App\Services\Routines;
 
+use App\Models\Item;
+use App\Models\Items;
 use App\Models\SystemLog;
+use App\Models\Tender;
 use App\Models\User;
 use App\Services\Tender\TenderService;
 use App\Traits\PCPTrait;
@@ -66,6 +69,48 @@ class RoutinesService
         }
     }
 
+    public function populate_items_pncp()
+    {
+        try {
+            Log::info('Iniciando items no PCNP');
+
+            $tenders = Tender::doesntHave('items')
+                ->where('api_origin', 'PNCP')
+                ->orderBy('proposal_closing_date', 'desc')
+                ->get();
+
+            foreach($tenders as $tender){
+                $ano = $tender->year_purchase;
+                $sequencial = $tender->sequential_purchase;
+                $cnpj = $tender->organ_cnpj;
+
+                $result = $this->getItemsPNCP($cnpj, $ano, $sequencial);
+
+                if(!isset($result['status']) || !$result['status']){
+                    Log::error('Items não encontrados: PNCP');
+                    sleep(1);
+                    continue;
+                }
+
+                foreach($result['data'] as $item){
+                    Item::create([
+                        'tender_id' => $tender->id,
+                        'description' => $item['descricao']
+                    ]);
+                }
+            }
+                                                                                  
+        } catch (Exception $error) {
+            Log::error($error->getMessage());
+            SystemLog::create([
+                'action' => 'populate_database',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
     public function populate_database_pcp()
     {
         try {
@@ -106,6 +151,48 @@ class RoutinesService
             Log::info($error->getMessage());
             SystemLog::create([
                 'action' => 'populate_database',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function populate_items_pcp()
+    {
+        try {
+            Log::info('Iniciando busca de itens PCP');
+
+            $tenders = Tender::doesntHave('items')
+                ->where('api_origin', 'PCP')
+                ->orderBy('proposal_closing_date', 'desc')
+                ->get();
+
+            foreach($tenders as $tender){
+                $result = $this->getItemPCP($tender->id_licitacao);
+                
+                if(!isset($result['status']) || !$result['status']){
+                    Log::error('Items não encontrados PCP');
+                    SystemLog::create([
+                        'action' => 'Items not found',
+                        'file' => '',
+                        'line' => 0,
+                        'error' => $result['error'] ?? null,
+                    ]);
+                    sleep(1);
+                    continue;
+                }
+                foreach($result as $item){
+                    Item::created([
+                        'tender_id' => $tender->id,
+                        'descriptions' => $item->description
+                    ]);
+                }
+            }                                                                                                                                                                                                                                     
+        } catch (Exception $error) {
+            Log::info($error->getMessage());
+            SystemLog::create([
+                'action' => 'Items not found',
                 'file' => $error->getFile(),
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),

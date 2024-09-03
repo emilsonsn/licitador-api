@@ -29,6 +29,20 @@ class TenderController extends Controller
         return $this->response($result);
     }
 
+    public function note(Request $request){
+        $result = $this->tenderService->noteStore($request);
+
+        if($result['status']) $result['message'] = 'Anotação criada com sucesso';
+        return $this->response($result);
+    }
+
+    public function noteDelete($id){
+        $result = $this->tenderService->noteDelete($id);
+
+        if($result['status']) $result['message'] = 'Anotação deletada com sucesso';
+        return $this->response($result);
+    }
+
     private function response($result){
 
         return response()->json([

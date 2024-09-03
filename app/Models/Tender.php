@@ -44,4 +44,12 @@ class Tender extends Model
     public function favorites(){
         return $this->hasMany(FavoriteTender::class);
     }
+
+    public function items(){
+        return $this->hasMany(Item::class);
+    }
+
+    public function notes(){
+        return $this->hasMany(Note::class);
+    }
 }

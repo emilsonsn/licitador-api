@@ -3,6 +3,7 @@
 namespace App\Services\Tender;
 
 use App\Models\FavoriteTender;
+use App\Models\Note;
 use App\Models\SystemLog;
 use Exception;
 use App\Models\Tender;
@@ -19,7 +20,7 @@ class TenderService
     {
         try {
             $perPage = $request->input('take', 10);
-            $tenders = Tender::with('favorites');
+            $tenders = Tender::with(['favorites', 'items', 'notes']);
             $orderField = $reqiest->orderField ?? 'proposal_closing_date';
             $order = $reqiest->order ?? 'desc';
             
@@ -249,6 +250,40 @@ class TenderService
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'createAll',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function noteStore($request){
+        try {
+            $note = Note::create([
+                'note' => $request->note,
+                'tender_id' => $request->tender_id,
+            ]);
+
+            return ['status' => true, 'data' => $note];
+            
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'noteStore',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function noteDelete($id){
+        try {
+            Note::find($id)->delete();
+            return ['status' => true, 'data' => null];
+            
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'noteStore',
                 'file' => $error->getFile(),
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
