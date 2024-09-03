@@ -75,10 +75,19 @@ class UserService
     {
         try {
             $rules = [
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8',
+                'name' => 'nullable|string|max:255',
+                'surname' => 'nullable|string|max:255',
+                'birthday' => 'nullable|date',
+                'postalcode' => 'nullable|string|max:255',
+                'address' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:255',
+                'state' => 'nullable|string|max:255',
+                'cnpj' => 'nullable|string|max:255',
+                'corporate_reason' => 'nullable|string|max:255',
+                'fantasy_name' => 'nullable|string|max:255',
+                'opening_date' => 'nullable|date',
             ];
+
 
             $validator = Validator::make($request->all(), $rules);
 

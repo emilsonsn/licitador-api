@@ -38,7 +38,7 @@ class TenderService
             if ($request->input('modality_ids')) {
                 $modality_ids = explode(',', $request->input('modality_ids'));
                 foreach ($modality_ids as $indice => $modality_id){
-                    if(!$indice) $tenders->where('modality_id', $modality_id);
+                    if(!$indice) $tenders->where('modality_id', trim($modality_id));
                     else $tenders->orWhere('modality_id', $modality_id);
                 }
             }
