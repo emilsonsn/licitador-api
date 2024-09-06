@@ -144,9 +144,7 @@ class RoutinesService
                 $pagina+=1;
                 $first = false;
                 sleep(3);
-            }
-            
-                                                                                                                                                                                                                                                                    
+            }                                                                                                                                                                                              
         } catch (Exception $error) {
             Log::info($error->getMessage());
             SystemLog::create([
