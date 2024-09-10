@@ -8,6 +8,7 @@ use App\Models\SystemLog;
 use App\Models\Tender;
 use App\Models\User;
 use App\Services\Tender\TenderService;
+use App\Traits\AlertaLicitacaoTrait;
 use App\Traits\PCPTrait;
 use Exception;
 use App\Traits\PncpTrait;
@@ -23,7 +24,7 @@ class RoutinesService
         $this->tenderService = $tenderService;
     }
 
-    use PncpTrait, PCPTrait;
+    use PncpTrait, PCPTrait, AlertaLicitacaoTrait;
 
     public function populate_database()
     {
@@ -191,6 +192,56 @@ class RoutinesService
             Log::info($error->getMessage());
             SystemLog::create([
                 'action' => 'Items not found',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function populate_database_alerta_licitacao(){
+        try {
+            Log::info('Iniciando busca alerta licitação');
+
+            // $modalitys = $this->getModality();
+            $modalitys = [5, 6];
+            $ufs = $this->getUfs();
+            $dates = [];
+            
+            for($day =0; $day < 7; $day++) {
+                $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
+            }            
+            
+            foreach($ufs as $uf){
+                foreach($modalitys as $modality ){
+                    foreach($dates as $data_insercao){
+                        $pagina = 1;
+                        while (true){
+                            $data = [
+                                'uf' => $uf,
+                                'modalidade' => $modality,
+                                'pagina' => $pagina,
+                                'data_insercao' => $data_insercao
+                            ];
+        
+                            $result = $this->searchDataAlertaLicitacao($data);
+        
+                            if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                                Log::error('Data vázia: PNCP');
+                                break;
+                            }
+        
+                            $this->tenderService->createAllAlerta($result['data']);                    
+                            $pagina+=1;
+                        }
+                    }
+                }
+            }
+                                                                                                
+        } catch (Exception $error) {
+            Log::error($error->getMessage());
+            SystemLog::create([
+                'action' => 'populate_database',
                 'file' => $error->getFile(),
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),

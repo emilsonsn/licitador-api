@@ -7,6 +7,7 @@ use App\Models\Note;
 use App\Models\SystemLog;
 use Exception;
 use App\Models\Tender;
+use App\Traits\AlertaLicitacaoTrait;
 use App\Traits\PCPTrait;
 use App\Traits\PncpTrait;
 use Carbon\Carbon;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 class TenderService
 {
 
-    use PCPTrait, PncpTrait;
+    use PCPTrait, PncpTrait, AlertaLicitacaoTrait;
     public function search($request)
     {
         try {
@@ -257,6 +258,71 @@ class TenderService
         }
     }
 
+    public function createAllAlerta($tendersData)
+    {
+        try {
+            $tenders = [];
+            $batchSize = 20;
+
+            foreach ($tendersData as $tenderData) {
+                $cnpj = '';
+                if (strpos($tenderData['titulo'], 'PNCP') !== false) {
+                    $parts = explode('-', $tenderData['titulo']);
+                    if (isset($parts[1])) {
+                        $cnpj = $parts[1];
+                    }
+                }
+                
+                $purchaseYear = (explode('/', $tenderData['abertura']))[2];
+                $titleSplit = explode(' ', $tenderData['titulo']);
+                $process = end($titleSplit);
+                $tenders[] = [
+                    'id_licitacao' => null,
+                    'value' => $tenderData['valor'] ?? null,
+                    'modality' => $tenderData['tipo'] ?? null,
+                    'modality_id' => $tenderData['id_tipo'] ?? null,
+                    'status' => 'Aberto',
+                    'year_purchase' => $purchaseYear ?? null,
+                    'number_purchase' => $tenderData['id_licitacao'] ?? null,
+                    'sequential_purchase' => null,
+                    'organ_cnpj' => $cnpj,
+                    'organ_name' => $tenderData['orgao'] ?? null,
+                    'uf' => $tenderData['uf'] ?? null,
+                    'city' => $tenderData['municipio'] ?? null,
+                    'city_code' => $tenderData['municipio_IBGE'] ?? null,
+                    'description' => $tenderData['titulo'] ?? null,
+                    'object' => $tenderData['objeto'] ?? null,
+                    'instrument_name' => null,
+                    'observations' => $tenderData['id_licitacao'],
+                    'origin_url' => $tenderData['linkExterno'] ?? null,
+                    'process' => $process ?? null,
+                    'bid_opening_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d') ?? null,
+                    'proposal_closing_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d') ?? null,
+                    'publication_date' => Carbon::now()->format('Y-m-d') ?? null,
+                    'update_date' => Carbon::now()->format('Y-m-d') ?? null,
+                    'api_origin' => 'ALERTALICITACAO'
+                ];
+
+                if (count($tenders) >= $batchSize) {
+                    $this->insertBatch($tenders);
+                    $tenders = [];
+                }
+            }
+            
+            if (!empty($tenders)) {
+                $this->insertBatch($tenders);
+            }
+            
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'createAll',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
     public function noteStore($request){
         try {
             $note = Note::create([
@@ -301,6 +367,8 @@ class TenderService
                 $result = $this->getEditalPNCP($tender->organ_cnpj, $tender->year_purchase, $tender->sequential_purchase);
             }else if($tender->api_origin == 'PCP'){
                 $result = $this->getEditalPCP($tender->id_licitacao);
+            }else if($tender->api_origin == 'ALERTALICITACAO'){
+                $result = $this->getEditalAlerta($tender);
             }else{
                 $result = ['data' => []];
             }
@@ -328,7 +396,11 @@ class TenderService
         DB::transaction(function () use ($tenders) {
             foreach ($tenders as $tender) {
                 Tender::updateOrCreate(
-                    ['process' => $tender['process']],
+                    [
+                        'process' => $tender['process'],
+                        'city_code' => $tender['city_code'],
+                        'uf' => $tender['uf']
+                    ],
                     $tender
                 );
             }
