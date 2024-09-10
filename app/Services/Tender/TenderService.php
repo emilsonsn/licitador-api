@@ -70,8 +70,12 @@ class TenderService
 
             // Campo aberto, será somente um texto, eu vou quebrar o texto por palavras
             if ($request->input('object')) {
-                $objects = explode(' ' ,$request->input('object'));
-                $tenders->whereIn('object', $objects);
+                $objects = explode(',' ,$request->input('object'));
+                foreach($objects as $indice => $object) {
+                    if(!$indice)
+                        $tenders->where('object', 'like', "%$object%");
+                    else
+                        $tenders->orWhere('object', 'like', "%$object%");
             }
 
             // Campo aberto de texto. Campo Nº do Processo
