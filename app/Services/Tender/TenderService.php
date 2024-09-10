@@ -73,9 +73,10 @@ class TenderService
                 $objects = explode(',' ,$request->input('object'));
                 foreach($objects as $indice => $object) {
                     if(!$indice)
-                        $tenders->where('object', 'like', "%$object%");
+                        $tenders->where('object', 'like', "%$object%");                    
                     else
-                        $tenders->orWhere('object', 'like', "%$object%");
+                        $tenders->orWhere('object', 'like', "%$object%");                    
+                }
             }
 
             // Campo aberto de texto. Campo Nº do Processo
