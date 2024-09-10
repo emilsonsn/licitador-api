@@ -227,9 +227,12 @@ class RoutinesService
                             $result = $this->searchDataAlertaLicitacao($data);
         
                             if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                                Log::error('Data vázia: PNCP');
+                                Log::error('Data vázia: ALERTALICITACAO');
+                                sleep(60);
                                 break;
                             }
+                            
+                            sleep(2);
         
                             $this->tenderService->createAllAlerta($result['data']);                    
                             $pagina+=1;
