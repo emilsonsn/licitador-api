@@ -38,20 +38,13 @@ class TenderService
 
             if ($request->input('modality_ids')) {
                 $modality_ids = explode(',', $request->input('modality_ids'));
-                foreach ($modality_ids as $indice => $modality_id){
-                    if(!$indice) $tenders->where('modality_id', trim($modality_id));
-                    else $tenders->orWhere('modality_id', $modality_id);
-                }
+                $tenders->whereIn('modality_id', $modality_ids);
             }
 
             // Status: Aberto, Fechado, Aberto-Fechado, Fechado-Aberto
             if ($request->input('status')) {
-                $status = explode(',', $request->input('status'));
-                foreach ($status as $indice => $key){
-                    $key =  trim($key);
-                    if(!$indice) $tenders->where('status', $key);
-                    else $tenders->orWhere('status', $key);
-                }
+                $allStatus = explode(',', $request->input('status'));
+                $tenders->whereIn('status', $allStatus);                
             }
 
             // Tem que consegui buscar por cnpj do orgão. Campo: CNPJ do orgão
@@ -72,21 +65,13 @@ class TenderService
             // Só aparece se tiver com a UF selecionada
             if ($request->input('city')) {
                 $citys = explode(',' ,$request->input('city'));
-                foreach($citys as $indice => $key){
-                    $key =  trim($key);
-                    if(!$indice) $tenders->where('city', 'LIKE', "%$key%");
-                    else $tenders->orWhere('city', 'LIKE', "%$key%");
-                }
+                $tenders->whereIn('city', $citys);
             }
 
             // Campo aberto, será somente um texto, eu vou quebrar o texto por palavras
             if ($request->input('object')) {
-                $object = explode(' ' ,$request->input('object'));
-                foreach($object as $indice => $key){
-                    $key =  trim($key);
-                    if(!$indice) $tenders->where('object', 'LIKE', "%$key%");
-                    else $tenders->orWhere('object', 'LIKE', "%$key%");
-                }
+                $objects = explode(' ' ,$request->input('object'));
+                $tenders->whereIn('object', $objects);
             }
 
             // Campo aberto de texto. Campo Nº do Processo
