@@ -2,6 +2,8 @@ gti pull https://github_pat_11AMUX6AQ07t2aeNFo22Bz_mV6tn0ByxULOTHz1vj7qCL6HCAAWn
 
 composer update
 
+php artisan vendor:publish --tag=laravel-assets --ansi --force
+
 php artisan key:generate
 
 php artisan migrate
