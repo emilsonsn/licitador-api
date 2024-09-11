@@ -208,9 +208,11 @@ class RoutinesService
             $ufs = $this->getUfs();
             $dates = [];
             
-            for($day =0; $day < 7; $day++) {
-                $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
-            }            
+            // for($day =0; $day < 7; $day++) {
+            //     $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
+            // }
+
+            $dates = [Carbon::now()->format('Y-m-d')];
             
             foreach($ufs as $uf){
                 foreach($modalitys as $modality ){
@@ -261,12 +263,12 @@ class RoutinesService
             5,  // Concorrência - Presencial
             6,  // Pregão - Eletrônico
             7,  // Pregão - Presencial
-            13, //Leilão - Presencial
             8,  // Dispensa de Licitação
             9,  // Inexigibilidade
             10, //M anifestação de Interesse
             11, //P ré-qualificação
             12, //Credenciamento
+            13, //Leilão - Presencial
         ];
         shuffle($modalitys);
         return $modalitys;
