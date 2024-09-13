@@ -43,7 +43,11 @@ Route::middleware('jwt')->group(function(){
 
     });
 
-    Route::get('user/getUser', [UserController::class, 'getUser']);
+    // Open user
+    Route::prefix('user')->group(function(){
+        Route::get('getUser', [UserController::class, 'getUser']);
+        Route::patch('{id}', [UserController::class, 'update']);
+    });
 
     Route::get('setting/search', [SettingController::class, 'search']);
 
