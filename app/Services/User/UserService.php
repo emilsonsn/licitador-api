@@ -6,8 +6,10 @@ use App\Models\PasswordRecovery;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str; 
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecoveryMail;
+use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -50,20 +52,28 @@ class UserService
     public function create($request)
     {
         try {
-            // Definir regras de validação
             $rules = [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8',
             ];
 
             $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
-                return ['status' => false, 'errors' => $validator->errors()];
+                return ['status' => false, 'error' => $validator->errors(), 'statusCode' => 400];
             }
 
-            $user = User::create($validator->validated());
+            $password = Str::random(10);
+    
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($password),
+                'is_admin' => false,
+                'is_active' => true,
+            ]);
+
+            Mail::to($user->email)->send(new WelcomeMail($user->name, $user->email, $password));
 
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {

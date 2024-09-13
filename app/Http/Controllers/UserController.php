@@ -28,7 +28,7 @@ class UserController extends Controller
     public function create(Request $request){
         $result = $this->userService->create($request);
 
-        $result['message'] = "Usuário criado com sucesso";
+        if ($result['status']) $result['message'] = "Usuário criado com sucesso";
         return $this->response($result);
     }
 
@@ -65,6 +65,6 @@ class UserController extends Controller
             'message' => $result['message'] ?? null,
             'data' => $result['data'] ?? null,
             'error' => $result['error'] ?? null
-        ]);
+        ], $result['statusCode'] ?? 200);
     }
 }
