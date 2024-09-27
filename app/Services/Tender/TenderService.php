@@ -111,9 +111,9 @@ class TenderService
             if ($request->input('update_date_start') && $request->input('update_date_end')) {
                 $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
             }elseif($request->input('update_date_start')){
-                $tenders->whereBetween('proposal_closing_date', [Carbon::now()->format('Y-m-d'), $request->input('update_date_start')]);
+                $tenders->whereDate('proposal_closing_date', '>=' , $request->input('update_date_start'));
             }elseif($request->input('update_date_end')){
-                $tenders->whereBetween('proposal_closing_date', [Carbon::now()->format('Y-m-d'), $request->input('update_date_end')]);
+                $tenders->whereBetween('proposal_closing_date',  '<=' , $request->input('update_date_end'));
             }
 
             $tenders = $tenders->paginate($perPage)->appends($request->query());
