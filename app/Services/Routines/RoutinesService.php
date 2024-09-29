@@ -256,23 +256,17 @@ class RoutinesService
 
     private function getModality() : array {
         $modalitys = [
-            1,  // Leilão - Eletrônico
-            2,  // Diálogo Competitivo
-            3,  // Concurso
-            4,  // Concorrência - Eletrônica
-            5,  // Concorrência - Presencial
-            6,  // Pregão - Eletrônico
-            7,  // Pregão - Presencial
-            8,  // Dispensa de Licitação
-            9,  // Inexigibilidade
-            10, //M anifestação de Interesse
-            11, //P ré-qualificação
-            12, //Credenciamento
-            13, //Leilão - Presencial
+            5, //Pregão eletrônico
+            6, //Dispensas e dispensas eletrônicas
+            1, //Convite
+            2, //Concorrência
+            3, //Leilão
+            4, //Tomada de preços
+            8, //Pregão presencial
+            1, //Chamada/Chamamento público
         ];
-        shuffle($modalitys);
         return $modalitys;
-    }
+    }    
 
     private function getUfs() : array {
         $ufs = [
@@ -285,3 +279,20 @@ class RoutinesService
     }
 
 }
+
+
+//{ value: '1', label: 'Leilão - Eletrônico' },  1 -> 3
+//{ value: '13', label: 'Leilão - Presencial' }, 13 -> 3
+//{ value: '7', label: 'Pregão - Presencial' }, 7 -> 8
+
+//{ value: '2', label: 'Diálogo Competitivo' },
+//{ value: '3', label: 'Concurso' }, 3 -> 1
+//{ value: '4', label: 'Concorrência - Eletrônica' }, 4 -> 2
+//{ value: '5', label: 'Concorrência - Presencial' }, 5 -> 2
+//{ value: '6', label: 'Pregão - Eletrônico' }, 6 -> 5
+//{ value: '8', label: 'Dispensa de Licitação' }, 8 -> 6
+
+//{ value: '12', label: 'Credenciamento' },
+//{ value: '10', label: 'Manifestação de Interesse' },
+//{ value: '11', label: 'Pré-qualificação' },
+//{ value: '9', label: 'Inexigibilidade' },

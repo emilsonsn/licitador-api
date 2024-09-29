@@ -13,9 +13,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         //para rodar todo dia às 23 horas
-        $schedule->command('app:pcp-search')->withoutOverlapping()->dailyAt('23:00');
+        // $schedule->command('app:pcp-search')->withoutOverlapping()->dailyAt('23:00');
         // $schedule->command('app:pncp-search')->withoutOverlapping()->hourly();
-        $schedule->command('app:pcp-get-items')->withoutOverlapping()->hourly();
+        // $schedule->command('app:pcp-get-items')->withoutOverlapping()->hourly();
         // $schedule->command('app:pncp-get-items')->withoutOverlapping()->hourly();  
         $schedule->command('app:alerta-licitacao-search')->dailyAt('19:00');
               

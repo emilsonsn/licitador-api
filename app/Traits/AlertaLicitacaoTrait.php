@@ -52,7 +52,7 @@ trait AlertaLicitacaoTrait
             if (strpos($tender->number_purchase, 'PNCP') !== false) {
                 $numberPurchaseSplit = explode('-', $tender->number_purchase);
                 $cnpj = $numberPurchaseSplit[1];
-                $yearPurchase = $tender->year_purchase;
+                $yearPurchase = 2024;
                 $numberSplit = explode('0', $numberPurchaseSplit[2]);
                 $tenderNumber = end($numberSplit);
     
@@ -66,7 +66,8 @@ trait AlertaLicitacaoTrait
                 $existingUrls = [];
     
                 foreach ($urls as $url) {
-                    $response = $this->client->request('HEAD', $url);
+                    try{ $response = $this->client->request('HEAD', $url); }
+                    catch(Exception $e){ continue; }
     
                     if ($response->getStatusCode() === 200) {
                         $existingUrls[] = ["url" => $url];
