@@ -26,7 +26,8 @@ class UserService
 
             if(isset($search_term)){
                 $users->where('name', 'LIKE', "%{$search_term}%")
-                    ->orWhere('email', 'LIKE', "%{$search_term}%");
+                    ->orWhere('email', 'LIKE', "%{$search_term}%")
+                    ->orWhere('phone', 'LIKE', "%{$search_term}%");
             }
 
             $users = $users->paginate($perPage);
@@ -87,6 +88,7 @@ class UserService
             $rules = [
                 'name' => 'nullable|string|max:255',
                 'surname' => 'nullable|string|max:255',
+                "phone" => 'nullable|string|max:255',
                 'birthday' => 'nullable|date',
                 'postalcode' => 'nullable|string|max:255',
                 'address' => 'nullable|string|max:255',

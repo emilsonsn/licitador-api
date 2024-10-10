@@ -18,7 +18,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('app:pcp-get-items')->withoutOverlapping()->hourly();
         // $schedule->command('app:pncp-get-items')->withoutOverlapping()->hourly();  
         $schedule->command('app:alerta-licitacao-search')->dailyAt('19:00');
-              
+        $schedule->command('app:send-notification-whatsapp')->cron('0 19 */2 * *');              
     }
 
     /**
