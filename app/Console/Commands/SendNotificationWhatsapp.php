@@ -32,11 +32,11 @@ class SendNotificationWhatsapp extends Command
     {
         $users = User::whereNotNull('phone')
             ->whereNotNull('state')
-            ->where('is_admin', true)
-            // ->where(function($query){
-            //     $query->where('is_active', true)
-            //         ->orWhere('is_admin', true);
-            // })
+            // ->where('is_admin', true)
+            ->where(function($query){
+                $query->where('is_active', true)
+                    ->orWhere('is_admin', true);
+            })
             ->get();        
 
         foreach($users as $user){
@@ -44,12 +44,11 @@ class SendNotificationWhatsapp extends Command
             $state = $this->getState($user->state);
 
             $tendersCount = Tender::where('uf', $state)
-                // ->whereBetween('created_at', [Carbon::yesterday()->format('y-m-d'), Carbon::today()->format('y-m-d')])
+                ->whereBetween('created_at', [Carbon::yesterday()->format('y-m-d'), Carbon::today()->format('y-m-d')])
                 ->count();
 
             if($tendersCount > 0){
                 $phone = $this->preparePhone($user->phone);
-                $phone = "5583993877792";
                 $this->sendTenderNotification($phone, $tendersCount, $state);
             }            
         }
