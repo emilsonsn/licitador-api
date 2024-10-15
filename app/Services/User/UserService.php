@@ -56,6 +56,7 @@ class UserService
             $rules = [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
+                'has_notification' => 'required|boolean',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -72,6 +73,7 @@ class UserService
                 'password' => Hash::make($password),
                 'is_admin' => false,
                 'is_active' => true,
+                'has_notification' => $request->has_notification ?? false,
             ]);
 
             Mail::to($user->email)->send(new WelcomeMail($user->name, $user->email, $password));
@@ -98,8 +100,8 @@ class UserService
                 'corporate_reason' => 'nullable|string|max:255',
                 'fantasy_name' => 'nullable|string|max:255',
                 'opening_date' => 'nullable|date',
+                'has_notification' => 'nullable|boolean',
             ];
-
 
             $validator = Validator::make($request->all(), $rules);
 
@@ -110,6 +112,12 @@ class UserService
             if(!isset($userToUpdate)) throw new Exception('usuário não encontrado');
 
             $userToUpdate->update($validator->validated());
+
+            if($request->filled('password')){
+                $password = Hash::make($request->password);
+                $userToUpdate->password = $password;
+                $userToUpdate->save();
+            }
 
             return ['status' => true, 'data' => $userToUpdate];
         } catch (Exception $error) {

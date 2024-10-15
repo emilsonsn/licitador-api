@@ -30,14 +30,14 @@ class SendNotificationWhatsapp extends Command
      */
     public function handle()
     {
-        $users = User::whereNotNull('phone')
+        $users = User::where('has_notification', true)
+            ->whereNotNull('phone')
             ->whereNotNull('state')
-            // ->where('is_admin', true)
             ->where(function($query){
                 $query->where('is_active', true)
                     ->orWhere('is_admin', true);
             })
-            ->get();        
+            ->get();
 
         foreach($users as $user){
 

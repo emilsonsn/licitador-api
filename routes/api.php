@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FilterController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TenderController;
 use App\Http\Controllers\UserController;
@@ -47,6 +48,11 @@ Route::middleware('jwt')->group(function(){
     Route::prefix('user')->group(function(){
         Route::get('getUser', [UserController::class, 'getUser']);
         Route::patch('{id}', [UserController::class, 'update']);
+    });
+
+    Route::prefix('filter')->group(function(){
+        Route::get('/', [FilterController::class, 'getFilter']);
+        Route::post('/', [FilterController::class, 'createOrUpdate']);
     });
 
     Route::get('setting/search', [SettingController::class, 'search']);
