@@ -56,7 +56,7 @@ class UserService
             $rules = [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
-                'has_notification' => 'required|boolean',
+                'has_notification' => 'nullable|boolean',
             ];
 
             $validator = Validator::make($request->all(), $rules);
