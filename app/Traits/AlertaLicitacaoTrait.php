@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 
@@ -52,33 +53,10 @@ trait AlertaLicitacaoTrait
             if (strpos($tender->number_purchase, 'PNCP') !== false) {
                 $numberPurchaseSplit = explode('-', $tender->number_purchase);
                 $cnpj = $numberPurchaseSplit[1];
-                $yearPurchase = 2024;
-                $numberSplit = explode('0', $numberPurchaseSplit[2]);
-                $tenderNumber = end($numberSplit);
+                $yearPurchase = Carbon::now()->year;
+                $sequential = $numberPurchaseSplit[3];                
     
-                $urls = [
-                    "http://pncp.gov.br/pncp-api/v1/orgaos/$cnpj/compras/$yearPurchase/$tenderNumber/arquivos/1",
-                    "http://pncp.gov.br/pncp-api/v1/orgaos/$cnpj/compras/$yearPurchase/$tenderNumber/arquivos/2",
-                    "http://pncp.gov.br/pncp-api/v1/orgaos/$cnpj/compras/$yearPurchase/$tenderNumber/arquivos/3",
-                    "http://pncp.gov.br/pncp-api/v1/orgaos/$cnpj/compras/$yearPurchase/$tenderNumber/arquivos/4",
-                ];
-    
-                $existingUrls = [];
-    
-                foreach ($urls as $url) {
-                    try{ $response = $this->client->request('HEAD', $url); }
-                    catch(Exception $e){ continue; }
-    
-                    if ($response->getStatusCode() === 200) {
-                        $existingUrls[] = ["url" => $url];
-                    }
-                }
-    
-                if (empty($existingUrls)) {
-                    throw new Exception ('Edital não encontrado');
-                } 
-            
-                return ["status" => true, "data" => $existingUrls];
+                return ['cnpj' => $cnpj, 'year' => $yearPurchase, 'sequential' => $sequential];
             }
         } catch (\Exception $error) {
             return ["status" => false, "error" => $error->getMessage()];

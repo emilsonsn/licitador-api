@@ -361,14 +361,19 @@ class TenderService
                 $result = $this->getEditalPCP($tender->id_licitacao);
             }else if($tender->api_origin == 'ALERTALICITACAO'){
                 $result = $this->getEditalAlerta($tender);
+                if($result) {
+                    $result = $this->getEditalPNCP($result['cnpj'], $result['year'], $result['sequential']);
+                }
             }else{
                 $result = ['data' => []];
             }
 
-            foreach($result['data'] as $edital){
-                $editais[] = $edital['url'];
+            if(isset($result['data'])) {
+                foreach($result['data'] as $edital){
+                    $editais[] = $edital['url'];
+                }
             }
-    
+
             if(!isset($result['status'])) throw new Exception('Não foi possível obter editais para esse registro');
 
             return ['status' => true, 'data' => $editais];
