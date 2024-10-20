@@ -44,9 +44,9 @@ class FilterService
             $request['modality_ids'] = is_array($request->modality_ids) ? $request->modality_ids : explode(',',$request->modality_ids);
 
             $rules = [
-                'object' => 'nullable|string|max:255',
+                'object' => 'nullable|string',
                 'uf' => 'nullable|string|max:2',
-                'city' => 'nullable|string|max:255',
+                'city' => 'nullable|string',
                 'modality_ids' => 'nullable|array',
                 'update_date_start' => 'nullable|date',
                 'update_date_end' => 'nullable|date|after_or_equal:update_date_start',
