@@ -73,34 +73,42 @@ class RoutinesService
     public function populate_items_pncp()
     {
         try {
-            Log::info('Iniciando items no PCNP');
+            Log::info('Iniciando items no PNCP');
 
-            $tenders = Tender::doesntHave('items')
-                ->where('api_origin', 'PNCP')
-                ->orderBy('proposal_closing_date', 'desc')
-                ->get();
+            Tender::doesntHave('items')
+                ->where('api_origin', 'ALERTALICITACAO')
+                ->where('number_purchase', 'LIKE', '%PNCP%')
+                ->chunk(100, function($tenders) {
+                    foreach ($tenders as $tender) {
+                        $data = $this->getDataPNCP($tender);
+                        $cnpj = $data['cnpj'];
+                        $sequencial = $data['sequential'];
+                        $ano = $data['year'];
 
-            foreach($tenders as $tender){
-                $ano = $tender->year_purchase;
-                $sequencial = $tender->sequential_purchase;
-                $cnpj = $tender->organ_cnpj;
+                        $result = $this->getItemsPNCP($cnpj, $ano, $sequencial);
 
-                $result = $this->getItemsPNCP($cnpj, $ano, $sequencial);
+                        if (!isset($result['status']) || !$result['status']) {
+                            Log::error('Items não encontrados: PNCP - Tender ID: ' . $tender->id);
+                            sleep(1);
+                            continue;
+                        }
 
-                if(!isset($result['status']) || !$result['status']){
-                    Log::error('Items não encontrados: PNCP');
-                    sleep(1);
-                    continue;
-                }
+                        $itemsToInsert = [];
+                        foreach ($result['data'] as $item) {
+                            $itemsToInsert[] = [
+                                'tender_id' => $tender->id,
+                                'description' => $item['descricao'],
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
 
-                foreach($result['data'] as $item){
-                    Item::create([
-                        'tender_id' => $tender->id,
-                        'description' => $item['descricao']
-                    ]);
-                }
-            }
-                                                                                  
+                        if (!empty($itemsToInsert)) {
+                            Item::insert($itemsToInsert);
+                        }
+                    }
+                });
+
         } catch (Exception $error) {
             Log::error($error->getMessage());
             SystemLog::create([
@@ -111,6 +119,7 @@ class RoutinesService
             ]);
         }
     }
+
 
     public function populate_database_pcp()
     {

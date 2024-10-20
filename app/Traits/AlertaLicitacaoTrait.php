@@ -45,7 +45,7 @@ trait AlertaLicitacaoTrait
         }
     }
 
-    public function getEditalAlerta($tender)
+    public function getDataPNCP($tender)
     {
         try {
             $this->prepareDataAlerta();

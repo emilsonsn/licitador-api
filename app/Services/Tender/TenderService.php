@@ -360,7 +360,7 @@ class TenderService
             }else if($tender->api_origin == 'PCP'){
                 $result = $this->getEditalPCP($tender->id_licitacao);
             }else if($tender->api_origin == 'ALERTALICITACAO'){
-                $result = $this->getEditalAlerta($tender);
+                $result = $this->getDataPNCP($tender);
                 if($result) {
                     $result = $this->getEditalPNCP($result['cnpj'], $result['year'], $result['sequential']);
                 }
