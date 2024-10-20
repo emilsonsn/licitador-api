@@ -58,8 +58,8 @@ class TenderService
                 $tenders->where('organ_name', 'LIKE', "%$organ_name%");
             }
             
-            if ($request->input('uf')) {
-                $tenders->where('uf', $request->input('uf'));
+            if ($request->filled('uf')) {
+                $tenders->where('uf', $request->uf);
             }
 
             // Só aparece se tiver com a UF selecionada
@@ -71,12 +71,14 @@ class TenderService
             // Campo aberto, será somente um texto, eu vou quebrar o texto por palavras
             if ($request->input('object')) {
                 $objects = explode(',' ,$request->input('object'));
-                foreach($objects as $indice => $object) {
-                    if(!$indice)
-                        $tenders->where('object', 'like', "%$object%");                    
-                    else
-                        $tenders->orWhere('object', 'like', "%$object%");                    
-                }
+                $tenders->where(function($query) use ($objects){
+                    foreach($objects as $indice => $object) {
+                        if(!$indice)
+                            $query->where('object', 'like', "%$object%");
+                        else
+                            $query->orWhere('object', 'like', "%$object%");
+                    }
+                });
             }
 
             // Campo aberto de texto. Campo Nº do Processo
