@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\SettingController;
@@ -68,6 +69,11 @@ Route::middleware('jwt')->group(function(){
         Route::prefix('dashboard')->group(function(){
             Route::get('search', [DashboardController::class, 'search']);
             Route::get('userGraph', [DashboardController::class, 'userGraph']);
+        });
+
+        Route::prefix('automation')->group(function(){
+            Route::get('search', [AutomationController::class, 'search']);
+            Route::post('create', [AutomationController::class, 'create']);
         });
 
         Route::patch('setting/update', [SettingController::class, 'update']);

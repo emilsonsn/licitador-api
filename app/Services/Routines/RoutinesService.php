@@ -263,6 +263,59 @@ class RoutinesService
         }
     }
 
+    public function automation_alerta_licitacao($state, $city){
+        try {
+            Log::info('Iniciando busca auomática alerta licitação');
+
+            // $modalitys = $this->getModality();
+            $modalitys = [5, 6];
+            $ufs = [$state];
+            $dates = [];
+            
+            for($day =0; $day < 3; $day++) {
+                $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
+            }
+
+            foreach($ufs as $uf){
+                foreach($modalitys as $modality ){
+                    foreach($dates as $data_insercao){
+                        $pagina = 1;
+                        while (true){
+                            $data = [
+                                'uf' => $uf,
+                                'modalidade' => $modality,
+                                'pagina' => $pagina,
+                                'data_insercao' => $data_insercao
+                            ];
+        
+                            $result = $this->searchDataAlertaLicitacao($data);
+        
+                            if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                                Log::error('Data vázia: ALERTALICITACAO');
+                                sleep(2);
+                                break;
+                            }
+                            
+                            sleep(2);
+        
+                            $this->tenderService->createAllAlerta($result['data']);                    
+                            $pagina+=1;
+                        }
+                    }
+                }
+            }
+                                                                                                
+        } catch (Exception $error) {
+            Log::error($error->getMessage());
+            SystemLog::create([
+                'action' => 'automation_populate_database',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
     private function getModality() : array {
         $modalitys = [
             5, //Pregão eletrônico
