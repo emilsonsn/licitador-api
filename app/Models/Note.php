@@ -17,10 +17,15 @@ class Note extends Model
 
     protected $fillable = [
         'tender_id',
+        'user_id',
         'note',
     ];
 
     public function tender(){
         return $this->belongsTo(Tender::class);
+    }
+
+    public function user(){
+        return $this->belongsTo(User::class);
     }
 }
