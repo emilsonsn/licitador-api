@@ -11,6 +11,7 @@ use App\Traits\AlertaLicitacaoTrait;
 use App\Traits\PCPTrait;
 use App\Traits\PncpTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TenderService
@@ -21,19 +22,28 @@ class TenderService
     {
         try {
             $perPage = $request->input('take', 10);
-            $tenders = Tender::with(['favorites', 'items', 'notes']);
-            $orderField = $reqiest->orderField ?? 'proposal_closing_date';
-            $order = $reqiest->order ?? 'desc';
+            $auth = auth()->user();
+
+            $tenders = Tender::with([
+                'favorites' => function($query) use ($auth) {
+                    $query->where('user_id', $auth->id);
+                },
+                'notes' => function($query) use ($auth) {
+                    $query->where('user_id', $auth->id);
+                },
+                'items'
+            ]);
+            
+            $orderField = $request->orderField ?? 'proposal_closing_date';
+            $order = $request->order ?? 'desc';
             
             $tenders->orderBy($orderField, $order);
 
-            $auth = auth()->user();
-            
-            if($request->input('favorite') == 'true'){
+            if ($request->input('favorite') == 'true') {
                 $user_id = $auth->id;
                 $tenders->whereHas('favorites', function($query) use ($user_id) {
                     $query->where('user_id', $user_id);
-                });                
+                });
             }
 
             if ($request->input('modality_ids')) {
@@ -41,39 +51,34 @@ class TenderService
                 $tenders->whereIn('modality_id', $modality_ids);
             }
 
-            // Status: Aberto, Fechado, Aberto-Fechado, Fechado-Aberto
             if ($request->input('status')) {
                 $allStatus = explode(',', $request->input('status'));
-                $tenders->whereIn('status', $allStatus);                
+                $tenders->whereIn('status', $allStatus);
             }
 
-            // Tem que consegui buscar por cnpj do orgão. Campo: CNPJ do orgão
             if ($request->input('organ_cnpj')) {
                 $tenders->where('organ_cnpj', $request->input('organ_cnpj'));
             }
 
-            // Tem que consegui buscar por nome do orgão. Campo: Orgão
             if ($request->input('organ_name')) {
                 $organ_name = $request->input('organ_name');
                 $tenders->where('organ_name', 'LIKE', "%$organ_name%");
             }
-            
+
             if ($request->filled('uf')) {
-                $tenders->where('uf', $request->uf);
+                $tenders->where('uf', $request->input('uf'));
             }
 
-            // Só aparece se tiver com a UF selecionada
             if ($request->input('city')) {
-                $citys = explode(',' ,$request->input('city'));
+                $citys = explode(',', $request->input('city'));
                 $tenders->whereIn('city', $citys);
             }
 
-            // Campo aberto, será somente um texto, eu vou quebrar o texto por palavras
             if ($request->input('object')) {
-                $objects = explode(',' ,$request->input('object'));
-                $tenders->where(function($query) use ($objects){
-                    foreach($objects as $indice => $object) {
-                        if(!$indice)
+                $objects = explode(',', $request->input('object'));
+                $tenders->where(function($query) use ($objects) {
+                    foreach ($objects as $indice => $object) {
+                        if (!$indice)
                             $query->where('object', 'like', "%$object%");
                         else
                             $query->orWhere('object', 'like', "%$object%");
@@ -81,13 +86,11 @@ class TenderService
                 });
             }
 
-            // Campo aberto de texto. Campo Nº do Processo
             if ($request->input('process')) {
                 $process = $request->input('process');
                 $tenders->where('process', 'LIKE', "%$process%");
             }
 
-            // Campo aberto de texto. Campo Observação
             if ($request->input('observations')) {
                 $observations = $request->input('observations');
                 $tenders->where('observations', 'LIKE', "%$observations%");
@@ -95,27 +98,26 @@ class TenderService
 
             if ($request->input('proposal_closing_date_start') && $request->input('proposal_closing_date_end')) {
                 $tenders->whereBetween('proposal_closing_date', [$request->input('proposal_closing_date_start'), $request->input('proposal_closing_date_end')]);
-            }elseif($request->input('proposal_closing_date_start')){
+            } elseif ($request->input('proposal_closing_date_start')) {
                 $tenders->whereDate('proposal_closing_date', '>=', $request->input('proposal_closing_date_start'));
-            }elseif($request->input('proposal_closing_date_end')){
-                $tenders->whereDate('proposal_closing_date', '<=', $request->input('proposal_closing_date_end'));            
+            } elseif ($request->input('proposal_closing_date_end')) {
+                $tenders->whereDate('proposal_closing_date', '<=', $request->input('proposal_closing_date_end'));
             }
 
             if ($request->input('publication_date_start') && $request->input('publication_date_end')) {
                 $tenders->whereBetween('publication_date', [$request->input('publication_date_start'), $request->input('publication_date_end')]);
-            }elseif($request->input('publication_date_start')){
+            } elseif ($request->input('publication_date_start')) {
                 $tenders->whereDate('publication_date', '>=', $request->input('publication_date_start'));
-            }elseif($request->input('publication_date_end')){
+            } elseif ($request->input('publication_date_end')) {
                 $tenders->whereDate('publication_date', '<=', $request->input('publication_date_end'));
             }
 
-            // nome do campo: Data da última atualização
             if ($request->input('update_date_start') && $request->input('update_date_end')) {
                 $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
-            }elseif($request->input('update_date_start')){
-                $tenders->whereDate('proposal_closing_date', '>=' , $request->input('update_date_start'));
-            }elseif($request->input('update_date_end')){
-                $tenders->whereBetween('proposal_closing_date',  '<=' , $request->input('update_date_end'));
+            } elseif ($request->input('update_date_start')) {
+                $tenders->whereDate('proposal_closing_date', '>=', $request->input('update_date_start'));
+            } elseif ($request->input('update_date_end')) {
+                $tenders->whereDate('proposal_closing_date', '<=', $request->input('update_date_end'));
             }
 
             $tenders = $tenders->paginate($perPage)->appends($request->query());
@@ -125,6 +127,7 @@ class TenderService
             return ['status' => false, 'error' => $error->getMessage()];
         }
     }
+
 
     public function favorite($tender_id){
         $favoriteTender = FavoriteTender::where('tender_id', $tender_id)->first();
@@ -320,6 +323,7 @@ class TenderService
             $note = Note::create([
                 'note' => $request->note,
                 'tender_id' => $request->tender_id,
+                'user_id' => Auth::user()->id,
             ]);
 
             return ['status' => true, 'data' => $note];

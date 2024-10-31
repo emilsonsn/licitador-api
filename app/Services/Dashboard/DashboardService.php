@@ -5,6 +5,7 @@ namespace App\Services\Dashboard;
 use App\Models\Tender;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class DashboardService
 {
@@ -39,8 +40,7 @@ class DashboardService
 
             return ['status' => true, 'data' => $data];
         } catch (Exception $error) {
-            // Log the error message for debugging
-            \Log::error('Search failed: ' . $error->getMessage());
+            Log::error('Search failed: ' . $error->getMessage());
             return ['status' => false, 'error' => 'An error occurred while retrieving data.'];
         }
     }
@@ -59,8 +59,7 @@ class DashboardService
 
             return ['status' => true, 'data' => $users];
         } catch (Exception $error) {
-            // Log the error message for debugging
-            \Log::error('User graph retrieval failed: ' . $error->getMessage());
+            Log::error('User graph retrieval failed: ' . $error->getMessage());
             return ['status' => false, 'error' => 'An error occurred while retrieving user data.'];
         }
     }

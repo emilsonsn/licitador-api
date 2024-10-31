@@ -27,7 +27,7 @@ class AutomationService
 
             $rules = [
                 'state' => ['required', 'string', 'max:2'],
-                'city' => ['required', 'string'],
+                'city' => ['nullable', 'string'],
             ];
     
             $validator = Validator::make($request->all(), $rules);
@@ -37,6 +37,7 @@ class AutomationService
             }
     
             $data = $validator->validate();
+            $data['city'] = $data['city'] ?? '';
     
             $automation = Automation::create($data);
 
