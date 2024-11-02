@@ -397,11 +397,7 @@ class TenderService
         DB::transaction(function () use ($tenders) {
             foreach ($tenders as $tender) {
                 Tender::updateOrCreate(
-                    [
-                        'process' => $tender['process'],
-                        'city_code' => $tender['city_code'],
-                        'uf' => $tender['uf']
-                    ],
+                    $tender,
                     $tender
                 );
             }
