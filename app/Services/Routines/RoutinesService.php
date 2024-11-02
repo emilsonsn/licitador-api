@@ -255,7 +255,7 @@ class RoutinesService
         } catch (Exception $error) {
             Log::error($error->getMessage());
             SystemLog::create([
-                'action' => 'populate_database',
+                'action' => 'alerta_populate_database',
                 'file' => $error->getFile(),
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
