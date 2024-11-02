@@ -217,11 +217,11 @@ class RoutinesService
             $ufs = $this->getUfs();
             $dates = [];
             
-            // for($day =0; $day < 7; $day++) {
-            //     $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
-            // }
+            for($day =0; $day < 2; $day++) {
+                $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
+            }
 
-            $dates = [Carbon::now()->format('Y-m-d')];
+            // $dates = [Carbon::now()->format('Y-m-d')];
             
             foreach($ufs as $uf){
                 foreach($modalitys as $modality ){
