@@ -24,7 +24,7 @@ trait AlertaLicitacaoTrait
             $queryParams = [
                 'uf' => $data['uf'] ?? '',
                 'modalidade' => $data['modalidade'] ?? '',
-                'data_inserscao' => $data['data_insercao'] ?? '',
+                'data_insercao' => $data['data_insercao'] ?? '',
                 'pagina' => $data['pagina'] ?? 1,
                 'token' => $this->token,
             ];
