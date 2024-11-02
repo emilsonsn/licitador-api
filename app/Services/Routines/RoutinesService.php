@@ -239,7 +239,7 @@ class RoutinesService
         
                             if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
                                 Log::error('Data vázia: ALERTALICITACAO');
-                                sleep(5);
+                                sleep(10);
                                 break;
                             }
                                     

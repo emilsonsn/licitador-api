@@ -2,9 +2,11 @@
 
 namespace App\Traits;
 
+use App\Models\SystemLog;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 trait AlertaLicitacaoTrait
 {
@@ -22,7 +24,7 @@ trait AlertaLicitacaoTrait
             $queryParams = [
                 'uf' => $data['uf'] ?? '',
                 'modalidade' => $data['modalidade'] ?? '',
-                'data_insercao' => $data['data_insercao'] ?? '',
+                'data_inserscao' => $data['data_insercao'] ?? '',
                 'pagina' => $data['pagina'] ?? 1,
                 'token' => $this->token,
             ];
@@ -35,12 +37,20 @@ trait AlertaLicitacaoTrait
             $body = json_decode($response->getBody()->getContents(), true);
 
             if ($statusCode !== 200 || !isset($body['licitacoes']) || !count($body['licitacoes'])) {
-                return ['status' => false, 'error' => 'Não foi possível obter os dados.'];
+                $error = json_encode($body);
+                throw new Exception("searchDataAlertaLicitacao -> $error");
             } 
 
             return ['status' => true, 'data' => $body['licitacoes'], 'paginaAtual' => $body['paginas']];
 
         } catch (\Exception $error) {
+            Log::error($error->getMessage());
+            SystemLog::create([
+                'action' => 'searchDataAlertaLicitacao',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
             return ['status' => false, 'error' => $error->getMessage()];
         }
     }
