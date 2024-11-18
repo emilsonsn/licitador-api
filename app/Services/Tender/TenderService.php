@@ -22,14 +22,14 @@ class TenderService
     {
         try {
             $perPage = $request->input('take', 10);
-            $auth = auth()->user();
+            $auth = Auth::user();
 
             $tenders = Tender::with([
                 'favorites' => function($query) use ($auth) {
-                    $query->where('user_id', $auth->id);
+                    if($auth) $query->where('user_id', $auth->id);
                 },
                 'notes' => function($query) use ($auth) {
-                    $query->where('user_id', $auth->id);
+                    if($auth) $query->where('user_id', $auth->id);
                 },
                 'items'
             ]);

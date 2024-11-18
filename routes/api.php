@@ -32,6 +32,12 @@ Route::post('updatePassword', [UserController::class, 'updatePassword']);
 
 Route::get('validateToken', [AuthController::class, 'validateToken']);
 
+Route::prefix('public')->group(function(){
+    Route::prefix('tender')->group(function(){
+        Route::get('search', [TenderController::class, 'search']);
+    });
+});
+
 Route::middleware('jwt')->group(function(){
     Route::post('logout', [AuthController::class, 'logout']);
 
