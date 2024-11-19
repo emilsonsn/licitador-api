@@ -36,9 +36,11 @@ class FileService
     public function create($request)
     {
         try {
+            $request['expiration_date'] = $request['expiration_date'] == 'null' ? null : $request['expiration_date'];
+
             $rules = [
                 'description' => ['required', 'string', 'max:255'],
-                'expiration_date' => ['required', 'date'],
+                'expiration_date' => ['nullable', 'date'],
                 'category_id' => ['required', 'integer'],
                 'file' => ['required', 'file', 'mimes:pdf,jpeg,png,doc,docx'],
             ];
