@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecoveryMail;
 use App\Mail\WelcomeMail;
+use App\Models\Category;
+use App\Models\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -75,6 +77,16 @@ class UserService
                 'is_active' => true,
                 'has_notification' => $request->has_notification ?? false,
             ]);
+
+            $categories = Category::get();
+
+            foreach($categories as $category){
+                File::create([
+                    'category_id' => $category->id,
+                    'description' => $category->description,                    
+                    'user_id' => $user->id,
+                ]);
+            }
 
             Mail::to($user->email)->send(new WelcomeMail($user->name, $user->email, $password));
 

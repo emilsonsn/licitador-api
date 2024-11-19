@@ -128,7 +128,6 @@ class TenderService
         }
     }
 
-
     public function favorite($tender_id){
         $favoriteTender = FavoriteTender::where('tender_id', $tender_id)->first();
         $auth = auth()->user();

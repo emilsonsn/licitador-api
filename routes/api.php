@@ -4,7 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AutomationController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TenderController;
@@ -48,7 +50,6 @@ Route::middleware('jwt')->group(function(){
 
         Route::post('note', [TenderController::class, 'note']);
         Route::delete('note-delete/{note_id}', [TenderController::class, 'noteDelete']);
-
     });
 
     // Open user
@@ -62,6 +63,18 @@ Route::middleware('jwt')->group(function(){
         Route::post('/', [FilterController::class, 'createOrUpdate']);
     });
 
+    Route::prefix('file')->group(function(){
+        Route::get('search', [FileController::class, 'search']);
+        Route::post('create', [FileController::class, 'create']);
+        Route::patch('{id}', [FileController::class, 'update']);
+        Route::delete('{id}', [FileController::class, 'delete']);
+    });
+
+    Route::prefix('category')->group(function(){
+        Route::get('search', [CategoryController::class, 'search']);
+        Route::get('all', [CategoryController::class, 'all']);
+    });
+
     Route::get('setting/search', [SettingController::class, 'search']);
 
     Route::middleware(AdminMiddleware::class)->group(function(){
@@ -70,6 +83,12 @@ Route::middleware('jwt')->group(function(){
             Route::get('search', [UserController::class, 'search']);
             Route::post('create', [UserController::class, 'create']);
             Route::post('block/{id}', [UserController::class, 'userBlock']);
+        });
+
+        Route::prefix('category')->group(function(){
+            Route::post('create', [CategoryController::class, 'create']);
+            Route::patch('{id}', [CategoryController::class, 'update']);
+            Route::delete('{id}', [CategoryController::class, 'delete']);
         });
 
         Route::prefix('dashboard')->group(function(){

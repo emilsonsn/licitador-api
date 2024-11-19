@@ -45,4 +45,35 @@ trait EvolutionTrait
             return ['status' => false, 'error' => $e->getMessage()];
         }
     }
+
+    public function sendFileNotification($number, $documentName)
+    {
+        try {
+            $this->prepareDataEvolution();
+            $url = $this->baseUrl . "/message/sendText/{$this->accountName}";
+    
+            $text = "⚠️ Alerta de expiração de documento\n\n";
+            $text.="O documento $documentName expira hoje!";
+
+            $data = [
+                'headers' => [
+                    'apiKey' => $this->apiKey,
+                ],
+                'json' => [ 
+                    'number' => $number,
+                    'text' => $text,
+                ]
+            ];
+    
+            $response = $this->client->request('POST', $url, $data);
+    
+            $statusCode = $response->getStatusCode();
+            $bodyContent = $response->getBody()->getContents();
+            
+            return ['status' => true, 'data' => ['statusCode' => $statusCode, 'bodyContent' => $bodyContent]];
+    
+        } catch (\Exception $e) {
+            return ['status' => false, 'error' => $e->getMessage()];
+        }
+    }
 }
