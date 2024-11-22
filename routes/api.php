@@ -37,6 +37,7 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 Route::prefix('public')->group(function(){
     Route::prefix('tender')->group(function(){
         Route::get('search', [TenderController::class, 'search']);
+        Route::get('get-edital/{idLicitacao}', [TenderController::class, 'edital']);
     });
 });
 
