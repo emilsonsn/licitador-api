@@ -55,7 +55,7 @@
         <h1>Recuperação de Senha</h1>
         <p>Olá,</p>
         <p>Você solicitou a recuperação de senha. Use o botão abaixo para redefinir sua senha:</p>
-        <p><a href="{{env('FRONT_URL') . '/password_recovery?code=' . $code }}">Recuperar Senha</a></p>
+        <p><a href="{{'https://app.localizadordeeditais.com.br/password_recovery?code=' . $code }}">Recuperar Senha</a></p>
         <p>Se você não solicitou essa recuperação, por favor ignore este e-mail.</p>
         <div class="footer">
             <p>© {{ date('Y') }} Localizadordeeditais. Todos os direitos reservados.</p>
