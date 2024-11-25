@@ -20,6 +20,10 @@ trait AlertaLicitacaoTrait
     {
         try {
             $this->prepareDataAlerta();
+
+            if(!isset($this->token)){
+                throw new Exception('Token não encontrado.');
+            }
             
             $queryParams = [
                 'uf' => $data['uf'] ?? '',
