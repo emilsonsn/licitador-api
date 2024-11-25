@@ -13,7 +13,7 @@ trait AlertaLicitacaoTrait
     public function prepareDataAlerta(){
         $this->baseUrl = "https://alertalicitacao.com.br/api/v1";
         $this->client = new Client();
-        $this->token = env('ALERTA_TOKEN');
+        $this->token = "10c06e68bb556fbf5a06a0892c3565bb";
     }
 
     public function searchDataAlertaLicitacao($data)
