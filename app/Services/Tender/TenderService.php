@@ -120,8 +120,8 @@ class TenderService
                 $tenders->whereDate('proposal_closing_date', '<=', $request->input('update_date_end'));
             }
 
-            $tenders->select('tenders.*')
-                ->whereRaw('id IN (SELECT MAX(id) FROM tenders GROUP BY process)');
+            // $tenders->select('tenders.*')
+            //     ->whereRaw('id IN (SELECT MAX(id) FROM tenders GROUP BY process)');
 
             $tenders = $tenders->paginate($perPage)->appends($request->query());
 
