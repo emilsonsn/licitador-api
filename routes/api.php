@@ -84,6 +84,7 @@ Route::middleware('jwt')->group(function(){
             Route::get('search', [UserController::class, 'search']);
             Route::post('create', [UserController::class, 'create']);
             Route::post('block/{id}', [UserController::class, 'userBlock']);
+            Route::delete('{id}', [UserController::class, 'delete']);
         });
 
         Route::prefix('category')->group(function(){

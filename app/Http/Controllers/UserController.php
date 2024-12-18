@@ -46,6 +46,13 @@ class UserController extends Controller
         return $this->response($result);
     }
 
+    public function delete($id){
+        $result = $this->userService->delete($id);
+
+        $result['message'] = "Ação realizada com sucesso";
+        return $this->response($result);
+    }
+
     public function passwordRecovery(Request $request){
         $result = $this->userService->requestRecoverPassword($request);
 
