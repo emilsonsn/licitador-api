@@ -55,6 +55,10 @@ class DashboardService
                 $users->whereMonth('created_at', now()->month);
             }
 
+            if($period === 'annual'){
+                $users->whereYear('created_at', now()->year);
+            }
+
             $users = $users->get(['name', 'created_at']);
 
             return ['status' => true, 'data' => $users];

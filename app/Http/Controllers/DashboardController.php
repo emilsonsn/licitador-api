@@ -24,7 +24,7 @@ class DashboardController extends Controller
     public function userGraph(Request $request): JsonResponse
     {
         $request->validate([
-            'period' => 'sometimes|in:all,monthly'
+            'period' => 'sometimes|in:annual,monthly'
         ]);
 
         $result = $this->dashboardService->userGraph($request);
