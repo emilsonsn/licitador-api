@@ -21,8 +21,10 @@ class FileService
                 ->where('user_id', $userId);
 
             if(isset($search_term)){
-                $files->where('description', 'LIKE', "%{$search_term}%")
-                    ->orWhere('filename', 'LIKE', "%{$search_term}%");
+                $files->where(function($query) use($search_term){
+                    $query->where('description', 'LIKE', "%{$search_term}%")
+                        ->orWhere('filename', 'LIKE', "%{$search_term}%");
+                });
             }
 
             $files = $files->paginate($perPage);
