@@ -5,6 +5,7 @@ namespace App\Services\Tender;
 use App\Models\FavoriteTender;
 use App\Models\Note;
 use App\Models\SystemLog;
+use App\Traits\ComprasApiTrait;
 use Exception;
 use App\Models\Tender;
 use App\Traits\AlertaLicitacaoTrait;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class TenderService
 {
 
-    use PCPTrait, PncpTrait, AlertaLicitacaoTrait;
+    use PCPTrait, PncpTrait, AlertaLicitacaoTrait, ComprasApiTrait;
     public function search($request)
     {
         try {
@@ -38,6 +39,10 @@ class TenderService
             $order = $request->order ?? 'desc';
             
             $tenders->orderBy($orderField, $order);
+
+            if ($request->input('iminence') == 'true') {
+                $tenders->where('api_origin', 'COMPRASAPI');
+            }
 
             if ($request->input('favorite') == 'true') {
                 $user_id = $auth->id;
@@ -320,6 +325,61 @@ class TenderService
         }
     }
 
+    public function createComprasAPI($tendersData)
+    {
+        try {
+            $tenders = [];
+            $batchSize = 20;
+    
+            foreach ($tendersData as $tenderData) {
+
+                $tenders[] = [
+                    'id_licitacao' => $tenderData['codigoLicitacao'] ?? null,
+                    'value' => null,
+                    'modality' => $tenderData['tipoLicitacao']['modalidadeLicitacao'] ?? null,
+                    'modality_id' => $tenderData['tipoLicitacao']['codigoModalidadeLicitacao'] ?? null,
+                    'status' => $tenderData['status']['descricao'] ?? null,
+                    'year_purchase' => (int)substr($tenderData['identificacao'], -4) ?? null,
+                    'number_purchase' => $tenderData['numero'] ?? null,
+                    'sequential_purchase' => null,
+                    'organ_cnpj' => null,
+                    'organ_name' => $tenderData['razaoSocial'] ?? null,
+                    'uf' => $tenderData['unidadeCompradora']['uf'] ?? null,
+                    'city' => $tenderData['unidadeCompradora']['cidade'] ?? null,
+                    'city_code' => $tenderData['unidadeCompradora']['codigoMunicipioIbge'] ?? null,
+                    'description' => null,
+                    'object' => $tenderData['resumo'] ?? null,
+                    'instrument_name' => null,
+                    'observations' => null,
+                    'origin_url' => 'https://www.portaldecompraspublicas.com.br/processos' . ($tenderData['urlReferencia'] ?? null),
+                    'process' => $tenderData['identificacao'],
+                    'bid_opening_date' => $this->formatDateTime($tenderData['dataHoraInicioPropostas'] ?? null),
+                    'proposal_closing_date' => $this->formatDateTime($tenderData['dataHoraFinalPropostas'] ?? null),
+                    'publication_date' => $this->formatDateTime($tenderData['dataHoraPublicacao'] ?? null),
+                    'update_date' => null,
+                    'api_origin' => 'COMPRASAPI'
+                ];
+    
+                if (count($tenders) >= $batchSize) {
+                    $this->insertBatch($tenders);
+                    $tenders = [];
+                }
+            }
+            
+            if (!empty($tenders)) {
+                $this->insertBatch($tenders);
+            }
+            
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'createAll',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+    
     public function noteStore($request){
         try {
             $note = Note::create([
@@ -370,6 +430,8 @@ class TenderService
                 if($result) {
                     $result = $this->getEditalPNCP($result['cnpj'], $result['year'], $result['sequential']);
                 }
+            }else if($tender->api_origin == 'COMPRASAPI'){
+                $result = $this->getEditalComprasApi($tender->id_licitacao);
             }else{
                 $result = ['data' => []];
             }
@@ -399,11 +461,26 @@ class TenderService
         DB::transaction(function () use ($tenders) {
             foreach ($tenders as $tender) {
                 Tender::updateOrCreate(
-                    $tender,
+                    [
+                        'api_origin' => $tender['api_origin'],
+                        'process' => $tender['process'],
+                        'uf' => $tender['uf'],
+                        'city' => $tender['city'],
+                    ],
                     $tender
                 );
             }
         });
     }
+
+    private function formatDateTime($dateTime)
+    {
+        if ($dateTime) {
+            $date = \DateTime::createFromFormat(\DateTime::ISO8601, $dateTime);
+            return $date ? $date->format('Y-m-d H:i:s') : null;
+        }
+        return null;
+    }
+
 }   
 
