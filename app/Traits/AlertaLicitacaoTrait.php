@@ -67,12 +67,12 @@ trait AlertaLicitacaoTrait
             if (strpos($tender->number_purchase, 'PNCP') !== false) {
                 $numberPurchaseSplit = explode('-', $tender->number_purchase);
                 $cnpj = $numberPurchaseSplit[1];
-                $yearPurchase = Carbon::now()->year;
+                $yearPurchase = $numberPurchaseSplit[count($numberPurchaseSplit) - 1];
                 $sequential = $numberPurchaseSplit[3];                
     
                 return ['cnpj' => $cnpj, 'year' => $yearPurchase, 'sequential' => $sequential];
             }
-        } catch (\Exception $error) {
+        } catch (Exception $error) {
             return ["status" => false, "error" => $error->getMessage()];
         }
     }
