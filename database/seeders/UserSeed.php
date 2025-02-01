@@ -22,5 +22,15 @@ class UserSeed extends Seeder
             'is_active' => true,
             'is_admin' => true
         ]);
+
+        User::updateOrCreate([
+            'email' => 'user@user',
+        ],
+        [
+            'name' => 'user',            
+            'password' => bcrypt('user'),
+            'is_active' => true,
+            'is_admin' => false
+        ]);
     }
 }
