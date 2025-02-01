@@ -293,8 +293,8 @@ class TenderService
                     'observations' => $tenderData['id_licitacao'],
                     'origin_url' => $tenderData['linkExterno'] ?? null,
                     'process' => $process ?? null,
-                    'bid_opening_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d') ?? null,
-                    'proposal_closing_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d') ?? null,
+                    'bid_opening_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d H:i:s') ?? null,
+                    'proposal_closing_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d H:i:s') ?? null,
                     'publication_date' => Carbon::now()->format('Y-m-d') ?? null,
                     'update_date' => Carbon::now()->format('Y-m-d') ?? null,
                     'api_origin' => 'ALERTALICITACAO'

@@ -212,7 +212,7 @@ class RoutinesService
         try {
             Log::info('Iniciando busca alerta licitação');
 
-            $modalitys = [5, 6];
+            $modalitys = [2, 5, 6, 8];
             $ufs = $this->getUfs();
 
             $dates = [Carbon::now()->format('Y-m-d')];

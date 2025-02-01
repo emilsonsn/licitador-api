@@ -13,9 +13,11 @@ class UserSeed extends Seeder
      */
     public function run(): void
     {
-        User::createOrFirst([
-            'name' => 'Admin',
+        User::updateOrCreate([
             'email' => 'admin@admin',
+        ],
+        [
+            'name' => 'Admin',            
             'password' => bcrypt('admin'),
             'is_active' => true,
             'is_admin' => true
