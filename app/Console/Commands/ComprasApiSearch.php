@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Routines\RoutinesService;
 use Illuminate\Console\Command;
 
-class PcpSearch extends Command
+class ComprasApiSearch extends Command
 {
     private $routineService;
 
@@ -19,7 +19,7 @@ class PcpSearch extends Command
      *
      * @var string
      */
-    protected $signature = 'app:pcp-search';
+    protected $signature = 'app:compras-api-search';
 
     /**
      * The console command description.
@@ -33,6 +33,6 @@ class PcpSearch extends Command
      */
     public function handle()
     {
-        $this->routineService->populate_database_pcp();
+        $this->routineService->populate_compras_imminence_desert();
     }
 }

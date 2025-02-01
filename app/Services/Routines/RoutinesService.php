@@ -3,12 +3,11 @@
 namespace App\Services\Routines;
 
 use App\Models\Item;
-use App\Models\Items;
 use App\Models\SystemLog;
 use App\Models\Tender;
-use App\Models\User;
 use App\Services\Tender\TenderService;
 use App\Traits\AlertaLicitacaoTrait;
+use App\Traits\ComprasApiTrait;
 use App\Traits\PCPTrait;
 use Exception;
 use App\Traits\PncpTrait;
@@ -24,7 +23,7 @@ class RoutinesService
         $this->tenderService = $tenderService;
     }
 
-    use PncpTrait, PCPTrait, AlertaLicitacaoTrait;
+    use PncpTrait, PCPTrait, AlertaLicitacaoTrait, ComprasApiTrait;
 
     public function populate_database()
     {
@@ -201,6 +200,34 @@ class RoutinesService
             Log::info($error->getMessage());
             SystemLog::create([
                 'action' => 'Items not found',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function populate_compras_imminence_desert()
+    {
+        try {
+            Log::info('Iniciando Compras API: iminência de deserto');
+
+            
+            for($page = 1; $page < 10; $page++){    
+                    $result = $this->getTenderImminenceDesert($page);
+    
+                    if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                        Log::error('Data vázia: COMPRASAPI');
+                        break;
+                    }
+    
+                    $this->tenderService->createComprasAPI($result['data']);                    
+            }
+                                                                                                
+        } catch (Exception $error) {
+            Log::error($error->getMessage());
+            SystemLog::create([
+                'action' => 'populate_database',
                 'file' => $error->getFile(),
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
