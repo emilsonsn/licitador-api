@@ -237,7 +237,7 @@ class RoutinesService
         }
     }
 
-    public function populate_items_compras_api()
+    private function populate_items_compras_api()
     {
         try {
             Log::info('Iniciando busca de itens COMPRASAPI');
