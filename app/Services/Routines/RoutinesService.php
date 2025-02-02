@@ -264,7 +264,7 @@ class RoutinesService
                 foreach($result['data'] as $item){
                     $itemToUpdateOrCreate = [
                         'tender_id' => $tender->id,
-                        'descriptions' => $item['descricao']                        
+                        'description' => $item['descricao']                        
                     ];
                     Item::updateOrCreate(
                         $itemToUpdateOrCreate,
