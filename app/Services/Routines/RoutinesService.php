@@ -223,6 +223,8 @@ class RoutinesService
     
                     $this->tenderService->createComprasAPI($result['data']);                    
             }
+
+            $this->populate_items_compras_api();
                                                                                                 
         } catch (Exception $error) {
             Log::error($error->getMessage());
@@ -234,6 +236,52 @@ class RoutinesService
             ]);
         }
     }
+
+    private function populate_items_compras_api()
+    {
+        try {
+            Log::info('Iniciando busca de itens COMPRASAPI');
+
+            $tenders = Tender::doesntHave('items')
+                ->where('api_origin', 'COMPRASAPI')
+                ->orderBy('proposal_closing_date', 'desc')
+                ->get();
+
+            foreach($tenders as $tender){
+                $result = $this->getItemsComprasApi($tender->id_licitacao);
+                
+                if(!isset($result['status']) || !$result['status']){
+                    Log::error('Items não encontrados PCP');
+                    SystemLog::create([
+                        'action' => 'Items not found',
+                        'file' => '',
+                        'line' => 0,
+                        'error' => $result['error'] ?? null,
+                    ]);
+                    sleep(1);
+                    continue;
+                }
+                foreach($result['data'] as $item){
+                    $itemToUpdateOrCreate = [
+                        'tender_id' => $tender->id,
+                        'description' => $item['descricao']                        
+                    ];
+                    Item::updateOrCreate(
+                        $itemToUpdateOrCreate,
+                        $itemToUpdateOrCreate
+                    );
+                }
+            }                                                                                                                                                                                                                                     
+        } catch (Exception $error) {
+            Log::info($error->getMessage());
+            SystemLog::create([
+                'action' => 'Items not found',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }    
 
     public function populate_database_alerta_licitacao(){
         try {

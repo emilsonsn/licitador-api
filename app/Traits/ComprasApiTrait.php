@@ -42,12 +42,32 @@ trait ComprasApiTrait
         if(!isset($data) || !count($data)){
             return [
                 'status' => false,
-                'error' => 'Não foi possível obter os dados.'
+                'error' => 'Não foi possível obter os editais.'
             ];        }
 
         return [
             'status' => true,
             'data' => $data
         ];        
-    }    
+    }
+
+    public function getItemsComprasApi($id){
+        $this->prepareDataCompras();
+        $url = $this->baseUrl . "/licitacao/$id/itens";
+
+        $response = $this->client->request('GET', $url);     
+        
+        $data = json_decode($response->getBody(), true);
+
+        if(!isset($data['itens']['result']) || !count($data['itens']['result'])){
+            return [
+                'status' => false,
+                'error' => 'Não foi possível obter os itens.'
+            ];        }
+
+        return [
+            'status' => true,
+            'data' => $data['itens']['result']
+        ];        
+    }
 }
