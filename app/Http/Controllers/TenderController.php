@@ -19,8 +19,8 @@ class TenderController extends Controller
         return $this->response($result);
     }
 
-    public function favorite($tender_id){
-        $result = $this->tenderService->favorite($tender_id);
+    public function delete($tender_id){
+        $result = $this->tenderService->delete($tender_id);
         return $this->response($result);
     }
 

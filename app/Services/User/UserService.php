@@ -4,6 +4,7 @@ namespace App\Services\User;
 
 use App\Models\PasswordRecovery;
 use App\Models\User;
+use Auth;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str; 
@@ -14,6 +15,7 @@ use App\Models\Category;
 use App\Models\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserService
 {
@@ -167,6 +169,24 @@ class UserService
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
         }
+    }
+
+    public function loginAsUser($userId)
+    {
+        if (!Auth::user()->is_admin) {
+            return response()->json(['error' => 'Acesso negado'], 403);
+        }
+
+        $user = User::findOrFail($userId);
+
+        $token = JWTAuth::fromUser($user);
+
+        return [
+            'status' => true,
+            'data' => [
+                'token' => $token
+            ]
+        ];
     }
 
     public function requestRecoverPassword($request)

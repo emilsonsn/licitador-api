@@ -46,6 +46,13 @@ class UserController extends Controller
         return $this->response($result);
     }
 
+    public function loginAsUser($id){
+        $result = $this->userService->loginAsUser($id);
+
+        $result['message'] = "Ação realizada com sucesso";
+        return $this->response($result);
+    }
+
     public function delete($id){
         $result = $this->userService->delete($id);
 

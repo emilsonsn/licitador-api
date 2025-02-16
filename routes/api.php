@@ -47,16 +47,17 @@ Route::middleware('jwt')->group(function(){
     Route::prefix('tender')->group(function(){
         Route::get('search', [TenderController::class, 'search']);
         Route::get('get-edital/{idLicitacao}', [TenderController::class, 'edital']);
-        Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);
-
         Route::post('note', [TenderController::class, 'note']);
+        Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);        
         Route::delete('note-delete/{note_id}', [TenderController::class, 'noteDelete']);
+        Route::delete('{tender_id}', [TenderController::class, 'delete']);
     });
 
     // Open user
     Route::prefix('user')->group(function(){
         Route::get('getUser', [UserController::class, 'getUser']);
         Route::patch('{id}', [UserController::class, 'update']);
+        Route::get('/login-as/{userId}', [UserController::class, 'loginAsUser']);
     });
 
     Route::prefix('filter')->group(function(){
@@ -79,7 +80,6 @@ Route::middleware('jwt')->group(function(){
     Route::get('setting/search', [SettingController::class, 'search']);
 
     Route::middleware(AdminMiddleware::class)->group(function(){
-
         Route::prefix('user')->group(function(){
             Route::get('search', [UserController::class, 'search']);
             Route::post('create', [UserController::class, 'create']);
@@ -104,7 +104,6 @@ Route::middleware('jwt')->group(function(){
         });
 
         Route::patch('setting/update', [SettingController::class, 'update']);
-
     });
 });
 

@@ -134,6 +134,18 @@ class TenderService
         }
     }
 
+    public function delete($tender_id){
+        $tenderToDelete = Tender::findOrFail($tender_id);        
+
+        $process = $tenderToDelete->process;
+        $tenderToDelete->delete();
+        
+        return [
+            'status' => true,
+            'data' => $process
+        ];
+    }
+
     public function favorite($tender_id){
         $favoriteTender = FavoriteTender::where('tender_id', $tender_id)->first();
         $auth = auth()->user();
