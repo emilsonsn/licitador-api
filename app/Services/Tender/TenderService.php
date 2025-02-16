@@ -38,7 +38,8 @@ class TenderService
             $orderField = $request->orderField ?? 'proposal_closing_date';
             $order = $request->order ?? 'desc';
             
-            $tenders->orderBy($orderField, $order);
+            $tenders->orderBy($orderField, $order)
+                ->where('api_origin', '!=', 'PNCP');
 
             if ($request->input('iminence') == 'true') {
                 $tenders->where('api_origin', 'COMPRASAPI');
@@ -124,9 +125,6 @@ class TenderService
             } elseif ($request->input('update_date_end')) {
                 $tenders->whereDate('proposal_closing_date', '<=', $request->input('update_date_end'));
             }
-
-            // $tenders->select('tenders.*')
-            //     ->whereRaw('id IN (SELECT MAX(id) FROM tenders GROUP BY process)');
 
             $tenders = $tenders->paginate($perPage)->appends($request->query());
 
