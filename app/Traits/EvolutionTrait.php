@@ -8,7 +8,7 @@ trait EvolutionTrait
 {
     public function prepareDataEvolution(){
         $this->baseUrl = "https://evo.localizadordeeditais.com.br";
-        $this->apiKey = "d06f98af803db7b83ec744e3ae41ecd8";
+        $this->apiKey = env('EVO_API_KEY');
         $this->accountName = "Disparadordenotificacoes";        
         $this->client = new Client();
     }
