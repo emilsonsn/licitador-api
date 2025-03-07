@@ -16,9 +16,9 @@ class UserStatusMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $is_active = Auth::user()?->is_active;
+        $user = Auth::user();
 
-        if(! $is_active){
+        if(isset($user) && ! $user->is_active){
             return response()->json(['error' => 'User is not active'], 401);
         }
 
