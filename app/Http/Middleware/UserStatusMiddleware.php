@@ -18,7 +18,7 @@ class UserStatusMiddleware
     {
         $user = Auth::user();
 
-        if(isset($user) && ! $user->is_active){
+        if(isset($user) && ! $user->is_admin && ! $user->is_active){
             return response()->json(['error' => 'User is not active'], 401);
         }
 
