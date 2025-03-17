@@ -103,7 +103,11 @@ class TenderService
             }
 
             if ($request->input('proposal_closing_date_start') && $request->input('proposal_closing_date_end')) {
-                $tenders->whereBetween('proposal_closing_date', [$request->input('proposal_closing_date_start'), $request->input('proposal_closing_date_end')]);
+                if($request->proposal_closing_date_start == $request->proposal_closing_date_end){
+                    $tenders->whereDate('proposal_closing_date_start', $request->proposal_closing_date_start);
+                }else{
+                    $tenders->whereBetween('proposal_closing_date', [$request->input('proposal_closing_date_start'), $request->input('proposal_closing_date_end')]);
+                }                
             } elseif ($request->input('proposal_closing_date_start')) {
                 $tenders->whereDate('proposal_closing_date', '>=', $request->input('proposal_closing_date_start'));
             } elseif ($request->input('proposal_closing_date_end')) {
@@ -111,7 +115,11 @@ class TenderService
             }
 
             if ($request->input('publication_date_start') && $request->input('publication_date_end')) {
-                $tenders->whereBetween('publication_date', [$request->input('publication_date_start'), $request->input('publication_date_end')]);
+                if($request->publication_date_start == $request->publication_date_end){
+                    $tenders->whereDate('publication_date', $request->publication_date_start);
+                }else{
+                    $tenders->whereBetween('publication_date', [$request->input('publication_date_start'), $request->input('publication_date_end')]);
+                }
             } elseif ($request->input('publication_date_start')) {
                 $tenders->whereDate('publication_date', '>=', $request->input('publication_date_start'));
             } elseif ($request->input('publication_date_end')) {
@@ -119,7 +127,11 @@ class TenderService
             }
 
             if ($request->input('update_date_start') && $request->input('update_date_end')) {
-                $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
+                if($request->update_date_start == $request->update_date_end){
+                    $tenders->whereDate('proposal_closing_date', $request->update_date_start);
+                }else{
+                    $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
+                }                
             } elseif ($request->input('update_date_start')) {
                 $tenders->whereDate('proposal_closing_date', '>=', $request->input('update_date_start'));
             } elseif ($request->input('update_date_end')) {
