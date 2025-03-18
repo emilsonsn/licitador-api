@@ -44,7 +44,12 @@ class SendNotificationWhatsapp extends Command
             $state = $this->getState($user->state);
 
             $tendersCount = Tender::where('uf', $state)
-                ->whereBetween('created_at', [Carbon::yesterday()->format('y-m-d'), Carbon::today()->format('y-m-d')])
+                ->whereBetween(column: 'created_at',
+                    values: [
+                        Carbon::now()->subDays(2)->format('Y-m-d'),
+                        Carbon::today()->format('y-m-d')
+                    ]
+                )
                 ->count();
 
             if($tendersCount > 0){
