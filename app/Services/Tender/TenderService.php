@@ -34,12 +34,8 @@ class TenderService
                 },
                 'items'
             ]);
-            
-            $orderField = $request->orderField ?? 'proposal_closing_date';
-            $order = $request->order ?? 'desc';
-            
-            $tenders->orderBy($orderField, $order)
-                ->where('api_origin', '!=', 'PNCP');
+                        
+            $tenders->where('api_origin', '!=', 'PNCP');
 
             if ($request->input('iminence') == 'true') {
                 $tenders->where('api_origin', 'COMPRASAPI');
@@ -130,6 +126,8 @@ class TenderService
                 if($request->update_date_start == $request->update_date_end){
                     $tenders->whereDate('proposal_closing_date', $request->update_date_start);
                 }else{
+                    $request->orderField = 'proposal_closing_date';
+                    $request->order = 'asc';
                     $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
                 }                
             } elseif ($request->input('update_date_start')) {
@@ -138,7 +136,13 @@ class TenderService
                 $tenders->whereDate('proposal_closing_date', '<=', $request->input('update_date_end'));
             }
 
-            $tenders = $tenders->paginate($perPage)->appends($request->query());
+            $orderField = $request->orderField ?? 'proposal_closing_date';
+            $order = $request->order ?? 'desc';            
+
+            $tenders = $tenders
+                ->orderBy($orderField, $order)
+                ->paginate($perPage)
+                ->appends($request->query());
 
             return ['status' => true, 'data' => $tenders];
         } catch (Exception $error) {
