@@ -123,16 +123,20 @@ class TenderService
             }
 
             if ($request->input('update_date_start') && $request->input('update_date_end')) {
+                $request->orderField = 'proposal_closing_date';
+                $request->order = 'asc';
                 if($request->update_date_start == $request->update_date_end){
                     $tenders->whereDate('proposal_closing_date', $request->update_date_start);
                 }else{
-                    $request->orderField = 'proposal_closing_date';
-                    $request->order = 'asc';
                     $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
                 }                
             } elseif ($request->input('update_date_start')) {
+                $request->orderField = 'proposal_closing_date';
+                $request->order = 'asc';
                 $tenders->whereDate('proposal_closing_date', '>=', $request->input('update_date_start'));
             } elseif ($request->input('update_date_end')) {
+                $request->orderField = 'proposal_closing_date';
+                $request->order = 'asc';
                 $tenders->whereDate('proposal_closing_date', '<=', $request->input('update_date_end'));
             }
 
