@@ -5,6 +5,7 @@ namespace App\Services\User;
 use App\Models\PasswordRecovery;
 use App\Models\User;
 use Auth;
+use DB;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str; 
@@ -70,6 +71,8 @@ class UserService
             }
 
             $password = Str::random(10);
+
+            DB::beginTransaction();
     
             $user = User::create([
                 'name' => $request->name,
@@ -92,8 +95,11 @@ class UserService
 
             Mail::to($user->email)->send(new WelcomeMail($user->name, $user->email, $password));
 
+            DB::commit();
+
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {
+            DB::rollBack();
             return ['status' => false, 'error' => $error->getMessage()];
         }
     }
@@ -160,9 +166,13 @@ class UserService
         try {
             $user = User::find($user_id);
 
-            if (!$user) throw new Exception('Usuário não encontrado');
+            if (! $user) throw new Exception('Usuário não encontrado');
 
             $userName = $user->name;
+
+            $user->email = 'deleted_' . $user->id . '_' . now()->timestamp . '__' . $user->email;
+            $user->save();
+
             $user->delete();
 
             return ['status' => true, 'data' => $userName];
@@ -188,7 +198,6 @@ class UserService
             ]
         ];
     }
-
     public function requestRecoverPassword($request)
     {
         try {
