@@ -35,7 +35,7 @@ class TenderService
                 'items'
             ]);
                         
-            $tenders->where('api_origin', '!=', 'PNCP');
+            // $tenders->where('api_origin', '!=', 'PNCP');
 
             if ($request->input('iminence') == 'true') {
                 $tenders->where('api_origin', 'COMPRASAPI');
