@@ -36,7 +36,7 @@ class RoutinesService
             foreach($ufs as $uf){
                 foreach($modalitys as $modality ){
                     $pagina = 1;
-                    while (true){
+                    while ($pagina < 20){
                         $data = [
                             'dataFinal' => Carbon::now()->addYear()->format('Ymd'),
                             'pagina' => $pagina,
@@ -52,8 +52,9 @@ class RoutinesService
                             break;
                         }
     
-                        $this->tenderService->createAll($result['data']);                    
+                        $this->tenderService->createAll($result['data']);
                         $pagina+=1;
+                        sleep(1);
                     }
                 }
             }
@@ -75,8 +76,9 @@ class RoutinesService
             Log::info('Iniciando items no PNCP');
 
             Tender::doesntHave('items')
-                ->where('api_origin', 'ALERTALICITACAO')
+                ->whereIn('api_origin', ['ALERTALICITACAO', 'PNCP'])
                 ->where('number_purchase', 'LIKE', '%PNCP%')
+                ->where('created_at', '>=', now()->subDays(2))
                 ->chunk(100, function($tenders) {
                     foreach ($tenders as $tender) {
                         $data = $this->getDataPNCP($tender);
@@ -118,7 +120,6 @@ class RoutinesService
             ]);
         }
     }
-
 
     public function populate_database_pcp()
     {
@@ -387,14 +388,11 @@ class RoutinesService
 
     private function getModality() : array {
         $modalitys = [
-            5, //Pregão eletrônico
-            6, //Dispensas e dispensas eletrônicas
-            1, //Convite
-            2, //Concorrência
-            3, //Leilão
-            4, //Tomada de preços
-            8, //Pregão presencial
-            1, //Chamada/Chamamento público
+            13, //Leilão
+            7, // Pregão presencial
+            1, // Leião - Eletrônico            
+            6, // Pregão eletrônico
+            5, // Pregão eletrônico
         ];
         return $modalitys;
     }    
