@@ -29,6 +29,11 @@ class TenderController extends Controller
         return $this->response($result);
     }
 
+    public function items($tender_id){
+        $result = $this->tenderService->items($tender_id);
+        return $this->response($result);
+    }
+
     public function favorite($tender_id){
         $result = $this->tenderService->favorite($tender_id);
         return $this->response($result);

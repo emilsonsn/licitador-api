@@ -24,14 +24,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:pncp-search')
             ->dailyAt('17:00')
             ->withoutOverlapping();
-        $schedule->command('app:pncp-get-items')
-            ->dailyAt('10:00')
-            ->withoutOverlapping();
 
-        $schedule->command('app:pncp-get-items')
-            ->dailyAt('15:00')
-            ->withoutOverlapping();
-        
         $schedule->command('app:compras-api-search')->dailyAt('12:00');
         $schedule->command('app:document-notification-whatsapp')->dailyAt('18:00');
         $schedule->command('app:send-notification-whatsapp')->cron('0 19 */2 * *');  

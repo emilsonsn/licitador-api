@@ -47,6 +47,7 @@ Route::middleware(['jwt', UserStatusMiddleware::class])->group(function(){
     Route::prefix('tender')->group(function(){
         Route::get('search', [TenderController::class, 'search']);
         Route::get('get-edital/{idLicitacao}', [TenderController::class, 'edital']);
+        Route::get('{tender_id}/items', [TenderController::class, 'items']);
         Route::post('note', [TenderController::class, 'note']);
         Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);        
         Route::delete('note-delete/{note_id}', [TenderController::class, 'noteDelete']);

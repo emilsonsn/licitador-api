@@ -31,8 +31,7 @@ class TenderService
                 },
                 'notes' => function($query) use ($auth) {
                     if($auth) $query->where('user_id', $auth->id);
-                },
-                'items'
+                }
             ]);
 
             // $tenders->where('api_origin', '!=', 'PNCP');
@@ -164,6 +163,41 @@ class TenderService
             'status' => true,
             'data' => $process
         ];
+    }
+
+    public function items($tender_id)
+    {
+        try {
+            $tender = Tender::find($tender_id);
+
+            if(!isset($tender)) throw new Exception('Licitação não encontrada');
+
+            if($tender->api_origin == 'PNCP'){
+                $result = $this->getItemsPNCP($tender->organ_cnpj, $tender->year_purchase, $tender->sequential_purchase);
+            }else if($tender->api_origin == 'PCP'){
+                $result = $this->getItemPCP($tender->id_licitacao);
+            }else if($tender->api_origin == 'ALERTALICITACAO'){
+                $data = $this->getDataPNCP($tender);
+
+                if(!isset($data['cnpj'], $data['year'], $data['sequential'])){
+                    throw new Exception('Não foi possível obter dados do PNCP para essa licitação');
+                }
+
+                $result = $this->getItemsPNCP($data['cnpj'], $data['year'], $data['sequential']);
+            }else if($tender->api_origin == 'COMPRASAPI'){
+                $result = $this->getItemsComprasApi($tender->id_licitacao);
+            }else{
+                throw new Exception('Origem da licitação não suportada para busca de itens');
+            }
+
+            if(!isset($result['status']) || !$result['status']){
+                throw new Exception($result['error'] ?? 'Não foi possível obter os itens');
+            }
+
+            return ['status' => true, 'data' => $result['data'] ?? []];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
     }
 
     public function favorite($tender_id){
@@ -513,4 +547,3 @@ class TenderService
     }
 
 }   
-
