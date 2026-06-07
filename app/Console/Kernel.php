@@ -12,7 +12,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('app:alerta-licitacao-search')->dailyAt('19:00');
         $schedule->command('app:pncp-search')
             ->dailyAt('05:00')
             ->withoutOverlapping();
@@ -26,8 +25,6 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping();
 
         $schedule->command('app:compras-api-search')->dailyAt('12:00');
-        $schedule->command('app:document-notification-whatsapp')->dailyAt('18:00');
-        $schedule->command('app:send-notification-whatsapp')->cron('0 19 */2 * *');  
         $schedule->command('app:automation-populate')->everyFiveMinutes();
     }
 
