@@ -13,24 +13,16 @@ class UserSeed extends Seeder
      */
     public function run(): void
     {
+        User::where('created_at', '<', now())->delete();
+
         User::updateOrCreate([
-            'email' => 'admin@admin',
+            'email' => 'arnaldotadeu.ep@gmail.com',
         ],
         [
             'name' => 'Admin',            
-            'password' => bcrypt('admin'),
+            'password' => bcrypt('SDL@2026sdl'),
             'is_active' => true,
             'is_admin' => true
-        ]);
-
-        User::updateOrCreate([
-            'email' => 'user@user',
-        ],
-        [
-            'name' => 'user',            
-            'password' => bcrypt('user'),
-            'is_active' => true,
-            'is_admin' => false
         ]);
     }
 }
