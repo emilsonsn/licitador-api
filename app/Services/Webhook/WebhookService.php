@@ -27,7 +27,9 @@ class WebhookService
                 case "PURCHASE_DELAYED":
                 case "PURCHASE_REFUNDED":
                     $result = $this->blockUser($request);
-                    break;                
+                    break;
+                default:
+                    $result = ['status' => false, 'error' => 'Event not handled'];
             }
             
             return ['status' => true, 'data' => $result];
