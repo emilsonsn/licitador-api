@@ -13,15 +13,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('app:pncp-search')
-            ->dailyAt('05:00')
+            ->dailyAt('16:00')
             ->withoutOverlapping();
 
         $schedule->command('app:pncp-search')
-            ->dailyAt('12:00')
-            ->withoutOverlapping();
-
-        $schedule->command('app:pncp-search')
-            ->dailyAt('17:00')
+            ->dailyAt('23:00')
             ->withoutOverlapping();
 
         $schedule->command('app:compras-api-search')->dailyAt('12:00');
