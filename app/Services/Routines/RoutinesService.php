@@ -246,25 +246,33 @@ class RoutinesService
 
     private function getModality() : array {
         $modalitys = [
-            1, // Leião - Eletrônico            
-            2,
-            3, // Concurso
+            8,
             4,
-            5,
-            6, // Pregão - Eletrônico
-            7, // Pregão - Presencial
-            8, // Dispensa de Licitação
+            7,
             9,
-            10,
-            11,
+            3,
+            5,
             12,
-            13, // Leilão - Presencial
-            14,
-            15,
-            16,
-            17,
-            18,
-            19
+            13,
+            // 1, // Leião - Eletrônico            
+            // 2,
+            // 3, // Concurso
+            // 4,
+            // 5,
+            // 6, // Pregão - Eletrônico
+            // 7, // Pregão - Presencial
+            // 8, // Dispensa de Licitação
+            // 9,
+            // 10,
+            // 11,
+            // 12,
+            // 13, // Leilão - Presencial
+            // 14,
+            // 15,
+            // 16,
+            // 17,
+            // 18,
+            // 19
         ];
         return $modalitys;
     }    
