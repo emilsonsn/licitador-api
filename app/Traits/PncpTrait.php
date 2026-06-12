@@ -33,6 +33,7 @@ trait PncpTrait
             return ['status' => true, 'data' => $body['data']];
 
         } catch (\Exception $e) {
+            Log::error('Erro ao buscar dados do PNCP: {}', ['error' => $e->getMessage()]);
             return ['status' => false, 'error' => $e->getMessage()];
         }
     }
