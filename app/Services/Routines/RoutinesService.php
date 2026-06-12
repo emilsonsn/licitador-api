@@ -50,6 +50,8 @@ class RoutinesService
                             Log::error('Data vázia: PNCP');
                             break;
                         }
+
+                        Log::info('Criando registros: PNCP {}', ['pagina' => $pagina, 'registros' => count($result['data'])]);
     
                         $this->tenderService->createAll($result['data']);
                         $pagina+=1;
@@ -254,7 +256,7 @@ class RoutinesService
             5,
             12,
             13,
-            
+
             // 1, // Leião - Eletrônico            
             // 2,
             // 3, // Concurso
