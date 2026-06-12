@@ -9,7 +9,7 @@ trait PncpTrait
 {
     private function pncpClient(): Client
     {
-        return new Client([
+        $options = [
             'connect_timeout' => config('services.pncp.connect_timeout', 15),
             'timeout' => config('services.pncp.timeout', 45),
             'headers' => [
@@ -17,7 +17,13 @@ trait PncpTrait
                 'User-Agent' => config('services.pncp.user_agent', 'Licitador API'),
             ],
             'curl' => $this->pncpCurlOptions(),
-        ]);
+        ];
+
+        if (config('services.pncp.proxy')) {
+            $options['proxy'] = config('services.pncp.proxy');
+        }
+
+        return new Client($options);
     }
 
     private function pncpCurlOptions(): array

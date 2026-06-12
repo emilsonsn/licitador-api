@@ -36,6 +36,7 @@ return [
         'timeout' => env('PNCP_TIMEOUT', 45),
         'force_ipv4' => env('PNCP_FORCE_IPV4', true),
         'user_agent' => env('PNCP_USER_AGENT', 'Licitador API'),
+        'proxy' => env('PNCP_PROXY'),
     ],
 
 ];
