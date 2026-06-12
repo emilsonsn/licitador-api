@@ -31,4 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'pncp' => [
+        'connect_timeout' => env('PNCP_CONNECT_TIMEOUT', 15),
+        'timeout' => env('PNCP_TIMEOUT', 45),
+        'force_ipv4' => env('PNCP_FORCE_IPV4', true),
+        'user_agent' => env('PNCP_USER_AGENT', 'Licitador API'),
+    ],
+
 ];

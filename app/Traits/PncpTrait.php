@@ -7,11 +7,36 @@ use Log;
 
 trait PncpTrait
 {
+    private function pncpClient(): Client
+    {
+        return new Client([
+            'connect_timeout' => config('services.pncp.connect_timeout', 15),
+            'timeout' => config('services.pncp.timeout', 45),
+            'headers' => [
+                'Accept' => 'application/json',
+                'User-Agent' => config('services.pncp.user_agent', 'Licitador API'),
+            ],
+            'curl' => $this->pncpCurlOptions(),
+        ]);
+    }
+
+    private function pncpCurlOptions(): array
+    {
+        if (! config('services.pncp.force_ipv4', true)
+            || ! defined('CURLOPT_IPRESOLVE')
+            || ! defined('CURL_IPRESOLVE_V4')) {
+            return [];
+        }
+
+        return [
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        ];
+    }
 
     public function searchDataPNCP($data)
     {
 
-        $client = new Client();
+        $client = $this->pncpClient();
         $url = 'https://pncp.gov.br/api/consulta/v1/contratacoes/proposta';
 
         try {
@@ -41,7 +66,7 @@ trait PncpTrait
 
     public function getItemsPNCP($cnpj, $ano, $sequencial)
     {
-        $client = new Client();
+        $client = $this->pncpClient();
         $url = "https://pncp.gov.br/api/pncp/v1/orgaos/{$cnpj}/compras/{$ano}/{$sequencial}/itens";
 
         try {
@@ -63,7 +88,7 @@ trait PncpTrait
 
     public function getEditalPNCP($cnpj, $ano, $sequencial)
     {
-        $client = new Client();
+        $client = $this->pncpClient();
         $url = "https://pncp.gov.br/api/pncp/v1/orgaos/{$cnpj}/compras/{$ano}/{$sequencial}/arquivos";
 
         try {
