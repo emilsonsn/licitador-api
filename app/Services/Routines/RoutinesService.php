@@ -108,70 +108,79 @@ class RoutinesService
             $ufs = $this->getUfs();
             $startDate = Carbon::now()->subDays(10)->format('Ymd');
             $endDate = Carbon::now()->format('Ymd');
+            $dates = [];
             $total = $this->emptyImportStats();
 
+            for ($day = 10; $day >= 0; $day--) {
+                $dates[] = Carbon::now()->subDays($day)->format('Ymd');
+            }
+
             Log::channel('tender_imports')->info('Iniciando PNCP: últimos 10 dias', [
-                'data_inicial' => $startDate,
-                'data_final' => $endDate,
+                'periodo_inicial' => $startDate,
+                'periodo_final' => $endDate,
+                'datas_consultadas' => $dates,
             ]);
 
-            foreach($ufs as $uf){
-                foreach($modalitys as $modality ){
-                    $pagina = 1;
+            foreach($dates as $date){
+                foreach($ufs as $uf){
+                    foreach($modalitys as $modality ){
+                        $pagina = 1;
 
-                    while (true){
-                        $data = [
-                            'dataInicial' => $startDate,
-                            'dataFinal' => $endDate,
-                            'pagina' => $pagina,
-                            'tamanhoPagina' => 20,
-                            'uf' => $uf,
-                            'codigoModalidadeContratacao' => $modality
-                        ];
+                        while (true){
+                            $data = [
+                                'dataFinal' => $date,
+                                'pagina' => $pagina,
+                                'tamanhoPagina' => 20,
+                                'uf' => $uf,
+                                'codigoModalidadeContratacao' => $modality
+                            ];
 
-                        $result = $this->searchDataPNCP($data);
+                            $result = $this->searchDataPNCP($data);
 
-                        if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                            Log::channel('tender_imports')->warning('PNCP últimos 10 dias sem dados para os filtros', [
+                            if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                                Log::channel('tender_imports')->warning('PNCP últimos 10 dias sem dados para os filtros', [
+                                    'uf' => $uf,
+                                    'modalidade' => $modality,
+                                    'pagina' => $pagina,
+                                    'data_final' => $date,
+                                    'periodo_inicial' => $startDate,
+                                    'periodo_final' => $endDate,
+                                ]);
+                                break;
+                            }
+
+                            $stats = $this->tenderService->createAll($result['data']);
+                            $total = $this->mergeImportStats($total, $stats);
+
+                            Log::channel('tender_imports')->info('PNCP últimos 10 dias: página importada', [
                                 'uf' => $uf,
                                 'modalidade' => $modality,
                                 'pagina' => $pagina,
-                                'data_inicial' => $startDate,
-                                'data_final' => $endDate,
+                                'data_final' => $date,
+                                'periodo_inicial' => $startDate,
+                                'periodo_final' => $endDate,
+                                'recebidas_api' => $stats['received'],
+                                'criadas' => $stats['created'],
+                                'atualizadas' => $stats['updated'],
+                                'total_recebidas_api' => $total['received'],
+                                'total_criadas' => $total['created'],
+                                'total_atualizadas' => $total['updated'],
                             ]);
-                            break;
+
+                            if (count($result['data']) < 20) {
+                                break;
+                            }
+
+                            $pagina+=1;
+                            sleep(1);
                         }
-
-                        $stats = $this->tenderService->createAll($result['data']);
-                        $total = $this->mergeImportStats($total, $stats);
-
-                        Log::channel('tender_imports')->info('PNCP últimos 10 dias: página importada', [
-                            'uf' => $uf,
-                            'modalidade' => $modality,
-                            'pagina' => $pagina,
-                            'data_inicial' => $startDate,
-                            'data_final' => $endDate,
-                            'recebidas_api' => $stats['received'],
-                            'criadas' => $stats['created'],
-                            'atualizadas' => $stats['updated'],
-                            'total_recebidas_api' => $total['received'],
-                            'total_criadas' => $total['created'],
-                            'total_atualizadas' => $total['updated'],
-                        ]);
-
-                        if (count($result['data']) < 20) {
-                            break;
-                        }
-
-                        $pagina+=1;
-                        sleep(1);
                     }
                 }
             }
 
             Log::channel('tender_imports')->info('PNCP últimos 10 dias: importação finalizada', [
-                'data_inicial' => $startDate,
-                'data_final' => $endDate,
+                'periodo_inicial' => $startDate,
+                'periodo_final' => $endDate,
                 'total_recebidas_api' => $total['received'],
                 'total_criadas' => $total['created'],
                 'total_atualizadas' => $total['updated'],

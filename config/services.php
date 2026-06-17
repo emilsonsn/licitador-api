@@ -34,6 +34,8 @@ return [
     'pncp' => [
         'connect_timeout' => env('PNCP_CONNECT_TIMEOUT', 15),
         'timeout' => env('PNCP_TIMEOUT', 45),
+        'retries' => env('PNCP_RETRIES', 3),
+        'retry_sleep_seconds' => env('PNCP_RETRY_SLEEP_SECONDS', 5),
         'force_ipv4' => env('PNCP_FORCE_IPV4', true),
         'user_agent' => env('PNCP_USER_AGENT', 'Licitador API'),
         'proxy' => env('PNCP_PROXY'),
