@@ -73,6 +73,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'tender_imports' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/tender-imports.log'),
+            'level' => env('TENDER_IMPORT_LOG_LEVEL', env('LOG_LEVEL', 'debug')),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

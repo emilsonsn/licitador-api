@@ -221,6 +221,7 @@ class TenderService
         try {
             $tenders = [];
             $batchSize = 20;
+            $stats = $this->emptyImportStats(count($tendersData));
 
             foreach ($tendersData as $tenderData) {
                 $tenders[] = [
@@ -251,14 +252,16 @@ class TenderService
                 ];
 
                 if (count($tenders) >= $batchSize) {
-                    $this->insertBatch($tenders);
+                    $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
                     $tenders = [];
                 }
             }
             
             if (!empty($tenders)) {
-                $this->insertBatch($tenders);
+                $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
+
+            return $stats;
             
         } catch (Exception $error) {
             SystemLog::create([
@@ -267,6 +270,8 @@ class TenderService
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
             ]);
+
+            return $this->emptyImportStats(count($tendersData));
         }
     }
 
@@ -275,6 +280,7 @@ class TenderService
         try {
             $tenders = [];
             $batchSize = 20;
+            $stats = $this->emptyImportStats(count($tendersData));
 
             foreach ($tendersData as $tenderData) {
                 $tenders[] = [
@@ -305,14 +311,16 @@ class TenderService
                 ];
 
                 if (count($tenders) >= $batchSize) {
-                    $this->insertBatch($tenders);
+                    $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
                     $tenders = [];
                 }
             }
             
             if (!empty($tenders)) {
-                $this->insertBatch($tenders);
+                $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
+
+            return $stats;
             
         } catch (Exception $error) {
             SystemLog::create([
@@ -321,6 +329,8 @@ class TenderService
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
             ]);
+
+            return $this->emptyImportStats(count($tendersData));
         }
     }
 
@@ -329,6 +339,7 @@ class TenderService
         try {
             $tenders = [];
             $batchSize = 20;
+            $stats = $this->emptyImportStats(count($tendersData));
 
             foreach ($tendersData as $tenderData) {
                 $cnpj = '';
@@ -370,14 +381,16 @@ class TenderService
                 ];
 
                 if (count($tenders) >= $batchSize) {
-                    $this->insertBatch($tenders);
+                    $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
                     $tenders = [];
                 }
             }
             
             if (!empty($tenders)) {
-                $this->insertBatch($tenders);
+                $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
+
+            return $stats;
             
         } catch (Exception $error) {
             SystemLog::create([
@@ -386,6 +399,8 @@ class TenderService
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
             ]);
+
+            return $this->emptyImportStats(count($tendersData));
         }
     }
 
@@ -394,6 +409,7 @@ class TenderService
         try {
             $tenders = [];
             $batchSize = 20;
+            $stats = $this->emptyImportStats(count($tendersData));
     
             foreach ($tendersData as $tenderData) {
 
@@ -425,14 +441,16 @@ class TenderService
                 ];
     
                 if (count($tenders) >= $batchSize) {
-                    $this->insertBatch($tenders);
+                    $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
                     $tenders = [];
                 }
             }
             
             if (!empty($tenders)) {
-                $this->insertBatch($tenders);
+                $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
+
+            return $stats;
             
         } catch (Exception $error) {
             SystemLog::create([
@@ -441,6 +459,8 @@ class TenderService
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
             ]);
+
+            return $this->emptyImportStats(count($tendersData));
         }
     }
     
@@ -522,9 +542,11 @@ class TenderService
 
     private function insertBatch(array $tenders)
     {
-        DB::transaction(function () use ($tenders) {
+        $stats = $this->emptyImportStats();
+
+        DB::transaction(function () use ($tenders, &$stats) {
             foreach ($tenders as $tender) {
-                Tender::updateOrCreate(
+                $model = Tender::updateOrCreate(
                     [
                         'api_origin' => $tender['api_origin'],
                         'process' => $tender['process'],
@@ -533,8 +555,33 @@ class TenderService
                     ],
                     $tender
                 );
+
+                if ($model->wasRecentlyCreated) {
+                    $stats['created']++;
+                } else {
+                    $stats['updated']++;
+                }
             }
         });
+
+        return $stats;
+    }
+
+    private function emptyImportStats(int $received = 0): array
+    {
+        return [
+            'received' => $received,
+            'created' => 0,
+            'updated' => 0,
+        ];
+    }
+
+    private function mergeImportStats(array $current, array $batch): array
+    {
+        $current['created'] += $batch['created'];
+        $current['updated'] += $batch['updated'];
+
+        return $current;
     }
 
     private function formatDateTime($dateTime)

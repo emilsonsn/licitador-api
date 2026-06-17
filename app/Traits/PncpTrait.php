@@ -46,13 +46,23 @@ trait PncpTrait
         $url = 'https://pncp.gov.br/api/consulta/v1/contratacoes/proposta';
 
         try {
+            $query = [
+                'dataFinal' => $data['dataFinal'],
+                'codigoModalidadeContratacao' => $data['codigoModalidadeContratacao'] ?? null,
+                'pagina' => $data['pagina'],
+                'tamanhoPagina' => $data['tamanhoPagina'],
+            ];
+
+            if (isset($data['dataInicial'])) {
+                $query['dataInicial'] = $data['dataInicial'];
+            }
+
+            if (isset($data['uf'])) {
+                $query['uf'] = $data['uf'];
+            }
+
             $response = $client->request('GET', $url, [
-                'query' => [
-                    'dataFinal' => $data['dataFinal'],
-                    'codigoModalidadeContratacao' => $data['codigoModalidadeContratacao'] ?? null,
-                    'pagina' => $data['pagina'],
-                    'tamanhoPagina' => $data['tamanhoPagina'],
-                ]
+                'query' => $query
             ]);
 
             $statusCode = $response->getStatusCode();
@@ -65,7 +75,9 @@ trait PncpTrait
             return ['status' => true, 'data' => $body['data']];
 
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar dados do PNCP: {}', ['error' => $e->getMessage()]);
+            Log::channel('tender_imports')->error('Erro ao buscar dados do PNCP', [
+                'error' => $e->getMessage(),
+            ]);
             return ['status' => false, 'error' => $e->getMessage()];
         }
     }

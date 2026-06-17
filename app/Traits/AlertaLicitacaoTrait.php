@@ -48,7 +48,9 @@ trait AlertaLicitacaoTrait
             return ['status' => true, 'data' => $body['licitacoes'], 'paginaAtual' => $body['paginas']];
 
         } catch (\Exception $error) {
-            Log::error($error->getMessage());
+            Log::channel('tender_imports')->error('Erro ao buscar dados do Alerta Licitação', [
+                'error' => $error->getMessage(),
+            ]);
             SystemLog::create([
                 'action' => 'searchDataAlertaLicitacao',
                 'file' => $error->getFile(),

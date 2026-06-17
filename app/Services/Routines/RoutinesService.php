@@ -27,10 +27,11 @@ class RoutinesService
     public function populate_database()
     {
         try {
-            Log::info('Iniciando PCNP');
+            Log::channel('tender_imports')->info('Iniciando PNCP');
 
             $modalitys = $this->getModality();
             $ufs = $this->getUfs();
+            $total = $this->emptyImportStats();
 
             foreach($ufs as $uf){
                 foreach($modalitys as $modality ){
@@ -47,7 +48,11 @@ class RoutinesService
                         $result = $this->searchDataPNCP($data);
     
                         if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                            Log::error('Data vázia: PNCP');
+                            Log::channel('tender_imports')->warning('PNCP sem dados para os filtros', [
+                                'uf' => $uf,
+                                'modalidade' => $modality,
+                                'pagina' => $pagina,
+                            ]);
                             SystemLog::create([
                                 'action' => 'data not found PNCP',
                                 'file' => '',
@@ -57,18 +62,126 @@ class RoutinesService
                             break;
                         }
 
-                        Log::info('Criando registros: PNCP {}', ['pagina' => $pagina, 'registros' => count($result['data'])]);
-    
-                        $this->tenderService->createAll($result['data']);
+                        $stats = $this->tenderService->createAll($result['data']);
+                        $total = $this->mergeImportStats($total, $stats);
+
+                        Log::channel('tender_imports')->info('PNCP: página importada', [
+                            'uf' => $uf,
+                            'modalidade' => $modality,
+                            'pagina' => $pagina,
+                            'recebidas_api' => $stats['received'],
+                            'criadas' => $stats['created'],
+                            'atualizadas' => $stats['updated'],
+                            'total_recebidas_api' => $total['received'],
+                            'total_criadas' => $total['created'],
+                            'total_atualizadas' => $total['updated'],
+                        ]);
+
                         $pagina+=1;
                         sleep(1);
                     }
                 }
             }
+
+            Log::channel('tender_imports')->info('PNCP: importação finalizada', [
+                'total_recebidas_api' => $total['received'],
+                'total_criadas' => $total['created'],
+                'total_atualizadas' => $total['updated'],
+            ]);
         } catch (Exception $error) {
-            Log::error($error->getMessage());
+            Log::channel('tender_imports')->error('Erro ao importar PNCP', [
+                'error' => $error->getMessage(),
+            ]);
             SystemLog::create([
                 'action' => 'populate_database',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+        }
+    }
+
+    public function populate_database_last_ten_days()
+    {
+        try {
+            $modalitys = $this->getModality();
+            $ufs = $this->getUfs();
+            $startDate = Carbon::now()->subDays(10)->format('Ymd');
+            $endDate = Carbon::now()->format('Ymd');
+            $total = $this->emptyImportStats();
+
+            Log::channel('tender_imports')->info('Iniciando PNCP: últimos 10 dias', [
+                'data_inicial' => $startDate,
+                'data_final' => $endDate,
+            ]);
+
+            foreach($ufs as $uf){
+                foreach($modalitys as $modality ){
+                    $pagina = 1;
+
+                    while (true){
+                        $data = [
+                            'dataInicial' => $startDate,
+                            'dataFinal' => $endDate,
+                            'pagina' => $pagina,
+                            'tamanhoPagina' => 20,
+                            'uf' => $uf,
+                            'codigoModalidadeContratacao' => $modality
+                        ];
+
+                        $result = $this->searchDataPNCP($data);
+
+                        if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+                            Log::channel('tender_imports')->warning('PNCP últimos 10 dias sem dados para os filtros', [
+                                'uf' => $uf,
+                                'modalidade' => $modality,
+                                'pagina' => $pagina,
+                                'data_inicial' => $startDate,
+                                'data_final' => $endDate,
+                            ]);
+                            break;
+                        }
+
+                        $stats = $this->tenderService->createAll($result['data']);
+                        $total = $this->mergeImportStats($total, $stats);
+
+                        Log::channel('tender_imports')->info('PNCP últimos 10 dias: página importada', [
+                            'uf' => $uf,
+                            'modalidade' => $modality,
+                            'pagina' => $pagina,
+                            'data_inicial' => $startDate,
+                            'data_final' => $endDate,
+                            'recebidas_api' => $stats['received'],
+                            'criadas' => $stats['created'],
+                            'atualizadas' => $stats['updated'],
+                            'total_recebidas_api' => $total['received'],
+                            'total_criadas' => $total['created'],
+                            'total_atualizadas' => $total['updated'],
+                        ]);
+
+                        if (count($result['data']) < 20) {
+                            break;
+                        }
+
+                        $pagina+=1;
+                        sleep(1);
+                    }
+                }
+            }
+
+            Log::channel('tender_imports')->info('PNCP últimos 10 dias: importação finalizada', [
+                'data_inicial' => $startDate,
+                'data_final' => $endDate,
+                'total_recebidas_api' => $total['received'],
+                'total_criadas' => $total['created'],
+                'total_atualizadas' => $total['updated'],
+            ]);
+        } catch (Exception $error) {
+            Log::channel('tender_imports')->error('Erro ao importar PNCP últimos 10 dias', [
+                'error' => $error->getMessage(),
+            ]);
+            SystemLog::create([
+                'action' => 'populate_database_last_ten_days',
                 'file' => $error->getFile(),
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
@@ -79,9 +192,10 @@ class RoutinesService
     public function populate_database_pcp()
     {
         try {
-            Log::info('Iniciando PCP');
+            Log::channel('tender_imports')->info('Iniciando PCP');
             $pagina = 1;
             $first = true;
+            $total = $this->emptyImportStats();
 
             while (true){
                 
@@ -91,7 +205,9 @@ class RoutinesService
                 $result = $this->searchDataPCP($data);
                 
                 if($result['status'] && !isset($result['data']) || !count($result['data'])){
-                    Log::error('Data vázia: PCP');
+                    Log::channel('tender_imports')->warning('PCP sem dados para os filtros', [
+                        'pagina' => $pagina,
+                    ]);
                     SystemLog::create([
                         'action' => 'data not found PCP',
                         'file' => '',
@@ -102,16 +218,36 @@ class RoutinesService
                     return;
                 }
 
-                if($result['paginaAtual'] === 1 and !$first) return;
+                if($result['paginaAtual'] === 1 and !$first) {
+                    Log::channel('tender_imports')->info('PCP: importação finalizada', [
+                        'total_recebidas_api' => $total['received'],
+                        'total_criadas' => $total['created'],
+                        'total_atualizadas' => $total['updated'],
+                    ]);
+                    return;
+                }
                 
-                Log::info('Criando registros: PCP');
-                $this->tenderService->createAllPCP($result['data']);      
+                $stats = $this->tenderService->createAllPCP($result['data']);
+                $total = $this->mergeImportStats($total, $stats);
+
+                Log::channel('tender_imports')->info('PCP: página importada', [
+                    'pagina' => $pagina,
+                    'recebidas_api' => $stats['received'],
+                    'criadas' => $stats['created'],
+                    'atualizadas' => $stats['updated'],
+                    'total_recebidas_api' => $total['received'],
+                    'total_criadas' => $total['created'],
+                    'total_atualizadas' => $total['updated'],
+                ]);
+
                 $pagina+=1;
                 $first = false;
                 sleep(3);
             }                                                                                                                                                                                              
         } catch (Exception $error) {
-            Log::info($error->getMessage());
+            Log::channel('tender_imports')->error('Erro ao importar PCP', [
+                'error' => $error->getMessage(),
+            ]);
             SystemLog::create([
                 'action' => 'populate_database',
                 'file' => $error->getFile(),
@@ -124,22 +260,44 @@ class RoutinesService
     public function populate_compras_imminence_desert()
     {
         try {
-            Log::info('Iniciando Compras API: iminência de deserto');
+            Log::channel('tender_imports')->info('Iniciando Compras API: iminência de deserto');
+            $total = $this->emptyImportStats();
 
             
             for($page = 1; $page < 10; $page++){    
                     $result = $this->getTenderImminenceDesert($page);
     
                     if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                        Log::error('Data vázia: COMPRASAPI');
+                        Log::channel('tender_imports')->warning('Compras API sem dados para os filtros', [
+                            'pagina' => $page,
+                        ]);
                         break;
                     }
     
-                    $this->tenderService->createComprasAPI($result['data']);                    
+                    $stats = $this->tenderService->createComprasAPI($result['data']);
+                    $total = $this->mergeImportStats($total, $stats);
+
+                    Log::channel('tender_imports')->info('Compras API: página importada', [
+                        'pagina' => $page,
+                        'recebidas_api' => $stats['received'],
+                        'criadas' => $stats['created'],
+                        'atualizadas' => $stats['updated'],
+                        'total_recebidas_api' => $total['received'],
+                        'total_criadas' => $total['created'],
+                        'total_atualizadas' => $total['updated'],
+                    ]);
             }
 
+            Log::channel('tender_imports')->info('Compras API: importação finalizada', [
+                'total_recebidas_api' => $total['received'],
+                'total_criadas' => $total['created'],
+                'total_atualizadas' => $total['updated'],
+            ]);
+
         } catch (Exception $error) {
-            Log::error($error->getMessage());
+            Log::channel('tender_imports')->error('Erro ao importar Compras API', [
+                'error' => $error->getMessage(),
+            ]);
             SystemLog::create([
                 'action' => 'populate_database',
                 'file' => $error->getFile(),
@@ -151,10 +309,11 @@ class RoutinesService
 
     public function populate_database_alerta_licitacao(){
         try {
-            Log::info('Iniciando busca alerta licitação');
+            Log::channel('tender_imports')->info('Iniciando busca alerta licitação');
 
             $modalitys = [2, 5, 6, 8];
             $ufs = $this->getUfs();
+            $total = $this->emptyImportStats();
 
             $dates = [Carbon::now()->format('Y-m-d')];
             
@@ -173,12 +332,32 @@ class RoutinesService
                             $result = $this->searchDataAlertaLicitacao($data);
         
                             if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                                Log::error('Data vázia: ALERTALICITACAO');
+                                Log::channel('tender_imports')->warning('Alerta Licitação sem dados para os filtros', [
+                                    'uf' => $uf,
+                                    'modalidade' => $modality,
+                                    'pagina' => $pagina,
+                                    'data_insercao' => $data_insercao,
+                                ]);
                                 sleep(10);
                                 break;
                             }
                                     
-                            $this->tenderService->createAllAlerta($result['data']);                    
+                            $stats = $this->tenderService->createAllAlerta($result['data']);
+                            $total = $this->mergeImportStats($total, $stats);
+
+                            Log::channel('tender_imports')->info('Alerta Licitação: página importada', [
+                                'uf' => $uf,
+                                'modalidade' => $modality,
+                                'pagina' => $pagina,
+                                'data_insercao' => $data_insercao,
+                                'recebidas_api' => $stats['received'],
+                                'criadas' => $stats['created'],
+                                'atualizadas' => $stats['updated'],
+                                'total_recebidas_api' => $total['received'],
+                                'total_criadas' => $total['created'],
+                                'total_atualizadas' => $total['updated'],
+                            ]);
+
                             $pagina+=1;
 
                             sleep(2);
@@ -186,9 +365,17 @@ class RoutinesService
                     }
                 }
             }
+
+            Log::channel('tender_imports')->info('Alerta Licitação: importação finalizada', [
+                'total_recebidas_api' => $total['received'],
+                'total_criadas' => $total['created'],
+                'total_atualizadas' => $total['updated'],
+            ]);
                                                                                                 
         } catch (Exception $error) {
-            Log::error($error->getMessage());
+            Log::channel('tender_imports')->error('Erro ao importar Alerta Licitação', [
+                'error' => $error->getMessage(),
+            ]);
             SystemLog::create([
                 'action' => 'alerta_populate_database',
                 'file' => $error->getFile(),
@@ -200,12 +387,16 @@ class RoutinesService
 
     public function automation_alerta_licitacao($state, $city){
         try {
-            Log::info('Iniciando busca auomática alerta licitação');
+            Log::channel('tender_imports')->info('Iniciando busca automática alerta licitação', [
+                'uf' => $state,
+                'cidade' => $city,
+            ]);
 
             // $modalitys = $this->getModality();
             $modalitys = [5, 6];
             $ufs = [$state];
             $dates = [];
+            $total = $this->emptyImportStats();
             
             for($day =0; $day < 3; $day++) {
                 $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
@@ -226,22 +417,56 @@ class RoutinesService
                             $result = $this->searchDataAlertaLicitacao($data);
         
                             if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                                Log::error('Data vázia: ALERTALICITACAO');
+                                Log::channel('tender_imports')->warning('Automação Alerta Licitação sem dados para os filtros', [
+                                    'uf' => $uf,
+                                    'cidade' => $city,
+                                    'modalidade' => $modality,
+                                    'pagina' => $pagina,
+                                    'data_insercao' => $data_insercao,
+                                ]);
                                 sleep(2);
                                 break;
                             }
                             
                             sleep(2);
         
-                            $this->tenderService->createAllAlerta($result['data']);                    
+                            $stats = $this->tenderService->createAllAlerta($result['data']);
+                            $total = $this->mergeImportStats($total, $stats);
+
+                            Log::channel('tender_imports')->info('Automação Alerta Licitação: página importada', [
+                                'uf' => $uf,
+                                'cidade' => $city,
+                                'modalidade' => $modality,
+                                'pagina' => $pagina,
+                                'data_insercao' => $data_insercao,
+                                'recebidas_api' => $stats['received'],
+                                'criadas' => $stats['created'],
+                                'atualizadas' => $stats['updated'],
+                                'total_recebidas_api' => $total['received'],
+                                'total_criadas' => $total['created'],
+                                'total_atualizadas' => $total['updated'],
+                            ]);
+
                             $pagina+=1;
                         }
                     }
                 }
             }
+
+            Log::channel('tender_imports')->info('Automação Alerta Licitação: importação finalizada', [
+                'uf' => $state,
+                'cidade' => $city,
+                'total_recebidas_api' => $total['received'],
+                'total_criadas' => $total['created'],
+                'total_atualizadas' => $total['updated'],
+            ]);
                                                                                                 
         } catch (Exception $error) {
-            Log::error($error->getMessage());
+            Log::channel('tender_imports')->error('Erro ao importar automação Alerta Licitação', [
+                'uf' => $state,
+                'cidade' => $city,
+                'error' => $error->getMessage(),
+            ]);
             SystemLog::create([
                 'action' => 'automation_populate_database',
                 'file' => $error->getFile(),
@@ -287,12 +512,29 @@ class RoutinesService
 
     private function getUfs() : array {
         $ufs = [
-            'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-            'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-            'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+            'SP', 'MG', 'RJ', 'PR', 'RS', 'SC', 'BA', 'PE', 'GO', 'DF',
+            'CE', 'ES', 'PA', 'MT', 'MS', 'MA', 'PB', 'RN', 'AL', 'PI',
+            'RO', 'AM', 'SE', 'TO', 'AC', 'AP', 'RR'
         ];
-        shuffle($ufs);
         return $ufs;
+    }
+
+    private function emptyImportStats(): array
+    {
+        return [
+            'received' => 0,
+            'created' => 0,
+            'updated' => 0,
+        ];
+    }
+
+    private function mergeImportStats(array $current, array $batch): array
+    {
+        $current['received'] += $batch['received'];
+        $current['created'] += $batch['created'];
+        $current['updated'] += $batch['updated'];
+
+        return $current;
     }
 
 }
