@@ -48,6 +48,12 @@ class RoutinesService
     
                         if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
                             Log::error('Data vázia: PNCP');
+                            SystemLog::create([
+                                'action' => 'data not found PNCP',
+                                'file' => '',
+                                'line' => 0,
+                                'error' => $result['data'],
+                            ]);
                             break;
                         }
 
@@ -59,7 +65,6 @@ class RoutinesService
                     }
                 }
             }
-                                                                                                
         } catch (Exception $error) {
             Log::error($error->getMessage());
             SystemLog::create([
