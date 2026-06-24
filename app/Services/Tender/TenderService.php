@@ -3,6 +3,7 @@
 namespace App\Services\Tender;
 
 use App\Models\FavoriteTender;
+use App\Models\CalendarTender;
 use App\Models\Note;
 use App\Models\SystemLog;
 use App\Traits\ComprasApiTrait;
@@ -214,6 +215,53 @@ class TenderService
             ]);
         }
         return ['status' => true, 'data' => $favoriteTender];
+    }
+
+    public function calendar()
+    {
+        try {
+            $user = Auth::user();
+
+            $tenders = Tender::query()
+                ->whereHas('calendarTenders', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->orderBy('bid_opening_date')
+                ->get();
+
+            return ['status' => true, 'data' => $tenders];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
+    }
+
+    public function calendarToggle($tender_id)
+    {
+        try {
+            Tender::findOrFail($tender_id);
+
+            $user = Auth::user();
+            $calendarTender = CalendarTender::where('tender_id', $tender_id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($calendarTender) {
+                CalendarTender::where('tender_id', $tender_id)
+                    ->where('user_id', $user->id)
+                    ->delete();
+
+                return ['status' => true, 'data' => ['marked' => false]];
+            }
+
+            CalendarTender::create([
+                'tender_id' => $tender_id,
+                'user_id' => $user->id,
+            ]);
+
+            return ['status' => true, 'data' => ['marked' => true]];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage()];
+        }
     }
 
     public function createAll($tendersData)

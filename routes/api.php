@@ -50,6 +50,8 @@ Route::middleware(['jwt', UserStatusMiddleware::class])->group(function(){
         Route::get('{tender_id}/items', [TenderController::class, 'items']);
         Route::post('note', [TenderController::class, 'note']);
         Route::post('favorite/{tender_id}', [TenderController::class, 'favorite']);        
+        Route::get('calendar', [TenderController::class, 'calendar']);
+        Route::post('calendar/{tender_id}', [TenderController::class, 'calendarToggle']);
         Route::delete('note-delete/{note_id}', [TenderController::class, 'noteDelete']);
         Route::delete('{tender_id}', [TenderController::class, 'delete']);
     });

@@ -39,6 +39,16 @@ class TenderController extends Controller
         return $this->response($result);
     }
 
+    public function calendar(){
+        $result = $this->tenderService->calendar();
+        return $this->response($result);
+    }
+
+    public function calendarToggle($tender_id){
+        $result = $this->tenderService->calendarToggle($tender_id);
+        return $this->response($result);
+    }
+
     public function note(Request $request){
         $result = $this->tenderService->noteStore($request);
 
