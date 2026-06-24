@@ -16,6 +16,10 @@ class Kernel extends ConsoleKernel
             ->dailyAt('16:00')
             ->withoutOverlapping();
 
+        $schedule->command('app:alerta-licitacao-search')
+            ->dailyAt('08:00')
+            ->withoutOverlapping();                        
+
         $schedule->command('app:pncp-search')
             ->dailyAt('23:00')
             ->withoutOverlapping();

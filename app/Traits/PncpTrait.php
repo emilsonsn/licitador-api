@@ -59,6 +59,8 @@ trait PncpTrait
 
         $maxAttempts = (int) config('services.pncp.retries', 3);
         $retrySleepSeconds = (int) config('services.pncp.retry_sleep_seconds', 5);
+        $rateLimitAttempts = (int) config('services.pncp.rate_limit_retries', 5);
+        $maxAttempts = max($maxAttempts, $rateLimitAttempts);
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
@@ -70,6 +72,29 @@ trait PncpTrait
                 $statusCode = $response->getStatusCode();
                 $content = $response->getBody()->getContents();
                 $body = json_decode($content, true);
+
+                if ($statusCode === 204) {
+                    return ['status' => false, 'error' => 'PNCP retornou sem conteúdo.'];
+                }
+
+                if ($this->isPncpRateLimitResponse($statusCode, $content)) {
+                    $sleepSeconds = $this->getPncpRateLimitSleepSeconds($response->getHeaderLine('Retry-After'));
+
+                    Log::channel('tender_imports')->warning('PNCP atingiu limite de requisições; aguardando para tentar novamente', [
+                        'query' => $query,
+                        'attempt' => $attempt,
+                        'max_attempts' => $maxAttempts,
+                        'sleep_seconds' => $sleepSeconds,
+                        'body' => $this->shortenPncpResponseBody($content),
+                    ]);
+
+                    if ($attempt < $maxAttempts) {
+                        sleep($sleepSeconds);
+                        continue;
+                    }
+
+                    return ['status' => false, 'error' => 'PNCP retornou limite de requisições excedido.'];
+                }
 
                 if ($statusCode !== 200) {
                     $this->logPncpRequestFailure($statusCode, $query, $content, $attempt, $maxAttempts);
@@ -142,7 +167,27 @@ trait PncpTrait
 
     private function shouldRetryPncpRequest(int $statusCode, int $attempt, int $maxAttempts): bool
     {
-        return $attempt < $maxAttempts && in_array($statusCode, [429, 500, 502, 503, 504], true);
+        return $attempt < $maxAttempts && in_array($statusCode, [500, 502, 503, 504], true);
+    }
+
+    private function isPncpRateLimitResponse(int $statusCode, ?string $body): bool
+    {
+        if ($statusCode === 429) {
+            return true;
+        }
+
+        $body = strtolower((string) $body);
+
+        return str_contains($body, 'limite de requisi');
+    }
+
+    private function getPncpRateLimitSleepSeconds(?string $retryAfter): int
+    {
+        if (is_numeric($retryAfter) && (int) $retryAfter > 0) {
+            return (int) $retryAfter;
+        }
+
+        return (int) config('services.pncp.rate_limit_sleep_seconds', 30);
     }
 
     private function shortenPncpResponseBody(?string $body): ?string

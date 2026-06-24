@@ -40,7 +40,7 @@ class RoutinesService
                         $data = [
                             'dataFinal' => Carbon::now()->addYear()->format('Ymd'),
                             'pagina' => $pagina,
-                            'tamanhoPagina' => 20,
+                            'tamanhoPagina' => 30,
                             'uf' => $uf,
                             'codigoModalidadeContratacao' => $modality
                         ];
@@ -57,7 +57,7 @@ class RoutinesService
                                 'action' => 'data not found PNCP',
                                 'file' => '',
                                 'line' => 0,
-                                'error' => $result['data'],
+                                'error' => $result['error'] ?? null,
                             ]);
                             break;
                         }
@@ -116,7 +116,7 @@ class RoutinesService
                 ];
                 $result = $this->searchDataPCP($data);
                 
-                if($result['status'] && !isset($result['data']) || !count($result['data'])){
+                if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
                     Log::channel('tender_imports')->warning('PCP sem dados para os filtros', [
                         'pagina' => $pagina,
                     ]);
@@ -124,7 +124,7 @@ class RoutinesService
                         'action' => 'data not found PCP',
                         'file' => '',
                         'line' => 0,
-                        'error' => $result['data'],
+                        'error' => $result['error'] ?? null,
                     ]);
                     sleep(60);
                     return;

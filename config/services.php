@@ -36,6 +36,8 @@ return [
         'timeout' => env('PNCP_TIMEOUT', 45),
         'retries' => env('PNCP_RETRIES', 3),
         'retry_sleep_seconds' => env('PNCP_RETRY_SLEEP_SECONDS', 5),
+        'rate_limit_retries' => env('PNCP_RATE_LIMIT_RETRIES', 5),
+        'rate_limit_sleep_seconds' => env('PNCP_RATE_LIMIT_SLEEP_SECONDS', 30),
         'force_ipv4' => env('PNCP_FORCE_IPV4', true),
         'user_agent' => env('PNCP_USER_AGENT', 'Licitador API'),
         'proxy' => env('PNCP_PROXY'),
