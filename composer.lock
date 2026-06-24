@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "97164e76ad70d3716a742889e1fe413a",
+    "content-hash": "ae74e3b3405c4f6968a43d39cbf2ca36",
     "packages": [
         {
             "name": "brick/math",
@@ -1348,13 +1348,13 @@
             },
             "type": "library",
             "extra": {
-                "branch-alias": {
-                    "dev-master": "3.x-dev"
-                },
                 "laravel": {
                     "providers": [
                         "Laravel\\Sanctum\\SanctumServiceProvider"
                     ]
+                },
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
                 }
             },
             "autoload": {
@@ -3062,12 +3062,12 @@
             ],
             "type": "library",
             "extra": {
-                "branch-alias": {
-                    "dev-main": "0.12.x-dev"
-                },
                 "bamarni-bin": {
                     "bin-links": false,
                     "forward-command": false
+                },
+                "branch-alias": {
+                    "dev-main": "0.12.x-dev"
                 }
             },
             "autoload": {
@@ -5656,10 +5656,6 @@
             },
             "type": "library",
             "extra": {
-                "branch-alias": {
-                    "dev-develop": "1.0-dev",
-                    "dev-2.x": "2.0-dev"
-                },
                 "laravel": {
                     "aliases": {
                         "JWTAuth": "Tymon\\JWTAuth\\Facades\\JWTAuth",
@@ -5668,6 +5664,10 @@
                     "providers": [
                         "Tymon\\JWTAuth\\Providers\\LaravelServiceProvider"
                     ]
+                },
+                "branch-alias": {
+                    "dev-2.x": "2.0-dev",
+                    "dev-develop": "1.0-dev"
                 }
             },
             "autoload": {
@@ -8461,12 +8461,12 @@
             "type": "library",
             "extra": {
                 "laravel": {
-                    "providers": [
-                        "Spatie\\LaravelIgnition\\IgnitionServiceProvider"
-                    ],
                     "aliases": {
                         "Flare": "Spatie\\LaravelIgnition\\Facades\\Flare"
-                    }
+                    },
+                    "providers": [
+                        "Spatie\\LaravelIgnition\\IgnitionServiceProvider"
+                    ]
                 }
             },
             "autoload": {
