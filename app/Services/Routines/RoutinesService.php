@@ -174,7 +174,6 @@ class RoutinesService
         try {
             Log::channel('tender_imports')->info('Iniciando Compras API: iminência de deserto');
             $total = $this->emptyImportStats();
-
             
             for($page = 1; $page < 10; $page++){    
                     $result = $this->getTenderImminenceDesert($page);
@@ -198,6 +197,8 @@ class RoutinesService
                         'total_criadas' => $total['created'],
                         'total_atualizadas' => $total['updated'],
                     ]);
+
+                    sleep(1);
             }
 
             Log::channel('tender_imports')->info('Compras API: importação finalizada', [
@@ -219,63 +220,38 @@ class RoutinesService
         }
     }
 
-    public function populate_database_alerta_licitacao(){
+    public function populate_database_alerta_licitacao(array $filters){
         try {
-            Log::channel('tender_imports')->info('Iniciando busca alerta licitação');
+            Log::channel('tender_imports')->info('Iniciando busca alerta licitação', $filters);
 
-            $modalitys = [2, 5, 6, 8];
-            $ufs = $this->getUfs();
+            $pagina = $filters['pagina'] ?? 1;
             $total = $this->emptyImportStats();
 
-            $dates = [Carbon::now()->format('Y-m-d')];
-            
-            foreach($ufs as $uf){
-                foreach($modalitys as $modality ){
-                    foreach($dates as $data_insercao){
-                        $pagina = 1;
-                        while (true){
-                            $data = [
-                                'uf' => $uf,
-                                'modalidade' => $modality,
-                                'pagina' => $pagina,
-                                'data_insercao' => $data_insercao
-                            ];
-        
-                            $result = $this->searchDataAlertaLicitacao($data);
-        
-                            if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                                Log::channel('tender_imports')->warning('Alerta Licitação sem dados para os filtros', [
-                                    'uf' => $uf,
-                                    'modalidade' => $modality,
-                                    'pagina' => $pagina,
-                                    'data_insercao' => $data_insercao,
-                                ]);
-                                sleep(10);
-                                break;
-                            }
-                                    
-                            $stats = $this->tenderService->createAllAlerta($result['data']);
-                            $total = $this->mergeImportStats($total, $stats);
+            while (true) {
+                $filters['pagina'] = $pagina;
+                $result = $this->searchDataAlertaLicitacao($filters);
 
-                            Log::channel('tender_imports')->info('Alerta Licitação: página importada', [
-                                'uf' => $uf,
-                                'modalidade' => $modality,
-                                'pagina' => $pagina,
-                                'data_insercao' => $data_insercao,
-                                'recebidas_api' => $stats['received'],
-                                'criadas' => $stats['created'],
-                                'atualizadas' => $stats['updated'],
-                                'total_recebidas_api' => $total['received'],
-                                'total_criadas' => $total['created'],
-                                'total_atualizadas' => $total['updated'],
-                            ]);
+                if (! $result['status'] || empty($result['data'])) {
+                    Log::channel('tender_imports')->warning('Alerta Licitação sem dados para os filtros', $filters);
 
-                            $pagina+=1;
-
-                            sleep(2);
-                        }
-                    }
+                    break;
                 }
+
+                $stats = $this->tenderService->createAllAlerta($result['data']);
+                $total = $this->mergeImportStats($total, $stats);
+
+                Log::channel('tender_imports')->info('Alerta Licitação: página importada', array_merge($filters, [
+                    'recebidas_api' => $stats['received'],
+                    'criadas' => $stats['created'],
+                    'atualizadas' => $stats['updated'],
+                    'total_recebidas_api' => $total['received'],
+                    'total_criadas' => $total['created'],
+                    'total_atualizadas' => $total['updated'],
+                ]));
+
+                $pagina++;
+
+                sleep(2);
             }
 
             Log::channel('tender_imports')->info('Alerta Licitação: importação finalizada', [

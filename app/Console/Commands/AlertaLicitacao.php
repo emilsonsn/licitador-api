@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Routines\RoutinesService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class AlertaLicitacao extends Command
@@ -34,6 +35,11 @@ class AlertaLicitacao extends Command
      */
     public function handle()
     {
-        $this->routineService->populate_database_alerta_licitacao();
+        $this->routineService->populate_database_alerta_licitacao([
+            'modalidade' => '5,6,8',
+            'pagina' => 1,
+            'id_portal' => 9999,
+            'data_insercao' => Carbon::today()->format('Y-m-d'),
+        ]);
     }
 }

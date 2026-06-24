@@ -28,10 +28,15 @@ trait AlertaLicitacaoTrait
             $queryParams = [
                 'uf' => $data['uf'] ?? '',
                 'modalidade' => $data['modalidade'] ?? '',
+                'id_portal' => $data['id_portal'] ?? '',
                 'data_insercao' => $data['data_insercao'] ?? '',
                 'pagina' => $data['pagina'] ?? 1,
                 'token' => $this->token,
             ];
+
+            $queryParams = array_filter($queryParams, static function ($value) {
+                return $value !== '';
+            });
         
             $url = $this->baseUrl . '/licitacoesAbertas/?' . http_build_query($queryParams);
 
