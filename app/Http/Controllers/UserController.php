@@ -60,6 +60,9 @@ class UserController extends Controller
         return $this->response($result);
     }
 
+    /**
+     * @unauthenticated
+     */
     public function passwordRecovery(Request $request){
         $result = $this->userService->requestRecoverPassword($request);
 
@@ -67,6 +70,9 @@ class UserController extends Controller
         return $this->response($result);
     }
 
+    /**
+     * @unauthenticated
+     */
     public function updatePassword(Request $request){
         $result = $this->userService->updatePassword($request);
         $result['message'] = "Senha atualizada com sucesso";

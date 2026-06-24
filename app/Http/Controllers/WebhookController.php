@@ -13,6 +13,9 @@ class WebhookController extends Controller
         $this->webhookService = $webhookService;
     }
 
+    /**
+     * @unauthenticated
+     */
     public function handle(Request $request){
         $result = $this->webhookService->handle($request);
 

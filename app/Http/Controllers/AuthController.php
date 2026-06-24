@@ -6,6 +6,9 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    /**
+     * @unauthenticated
+     */
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
