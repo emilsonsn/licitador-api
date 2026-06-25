@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FilterController;
@@ -66,6 +67,11 @@ Route::middleware(['jwt', UserStatusMiddleware::class])->group(function(){
     Route::prefix('filter')->group(function(){
         Route::get('/', [FilterController::class, 'getFilter']);
         Route::post('/', [FilterController::class, 'createOrUpdate']);
+    });
+
+    Route::prefix('company')->group(function(){
+        Route::get('/', [CompanyController::class, 'getCompany']);
+        Route::post('/', [CompanyController::class, 'createOrUpdate']);
     });
 
     Route::prefix('file')->group(function(){
