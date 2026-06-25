@@ -2,6 +2,7 @@
 
 namespace App\Services\Tender;
 
+use App\Enums\CalendarTenderStatus;
 use App\Models\FavoriteTender;
 use App\Models\CalendarTender;
 use App\Models\Note;
@@ -15,6 +16,8 @@ use App\Traits\PncpTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Enum;
 
 class TenderService
 {
@@ -217,17 +220,30 @@ class TenderService
         return ['status' => true, 'data' => $favoriteTender];
     }
 
-    public function calendar()
+    public function calendar($request)
     {
         try {
             $user = Auth::user();
+            $statuses = $request->filled('status') ? explode(',', $request->input('status')) : [];
 
             $tenders = Tender::query()
-                ->whereHas('calendarTenders', function ($query) use ($user) {
+                ->with(['calendarTenders' => function ($query) use ($user) {
                     $query->where('user_id', $user->id);
+                }])
+                ->whereHas('calendarTenders', function ($query) use ($user, $statuses) {
+                    $query->where('user_id', $user->id);
+
+                    if (! empty($statuses)) {
+                        $query->whereIn('status', $statuses);
+                    }
                 })
                 ->orderBy('bid_opening_date')
-                ->get();
+                ->get()
+                ->map(function ($tender) {
+                    $tender->calendar_status = $tender->calendarTenders->first()?->status?->value;
+
+                    return $tender;
+                });
 
             return ['status' => true, 'data' => $tenders];
         } catch (Exception $error) {
@@ -235,9 +251,17 @@ class TenderService
         }
     }
 
-    public function calendarToggle($tender_id)
+    public function calendarToggle($request, $tender_id)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'status' => ['nullable', new Enum(CalendarTenderStatus::class)],
+            ]);
+
+            if ($validator->fails()) {
+                return ['status' => false, 'error' => $validator->errors(), 'statusCode' => 400];
+            }
+
             Tender::findOrFail($tender_id);
 
             $user = Auth::user();
@@ -246,6 +270,13 @@ class TenderService
                 ->first();
 
             if ($calendarTender) {
+                if ($request->filled('status')) {
+                    $calendarTender->status = $request->input('status');
+                    $calendarTender->save();
+
+                    return ['status' => true, 'data' => ['marked' => true, 'calendar_status' => $calendarTender->status->value]];
+                }
+
                 CalendarTender::where('tender_id', $tender_id)
                     ->where('user_id', $user->id)
                     ->delete();
@@ -253,12 +284,13 @@ class TenderService
                 return ['status' => true, 'data' => ['marked' => false]];
             }
 
-            CalendarTender::create([
+            $calendarTender = CalendarTender::create([
                 'tender_id' => $tender_id,
                 'user_id' => $user->id,
+                'status' => $request->input('status', CalendarTenderStatus::Participating->value),
             ]);
 
-            return ['status' => true, 'data' => ['marked' => true]];
+            return ['status' => true, 'data' => ['marked' => true, 'calendar_status' => $calendarTender->status->value]];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
         }

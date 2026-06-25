@@ -39,13 +39,13 @@ class TenderController extends Controller
         return $this->response($result);
     }
 
-    public function calendar(){
-        $result = $this->tenderService->calendar();
+    public function calendar(Request $request){
+        $result = $this->tenderService->calendar($request);
         return $this->response($result);
     }
 
-    public function calendarToggle($tender_id){
-        $result = $this->tenderService->calendarToggle($tender_id);
+    public function calendarToggle(Request $request, $tender_id){
+        $result = $this->tenderService->calendarToggle($request, $tender_id);
         return $this->response($result);
     }
 
@@ -70,6 +70,6 @@ class TenderController extends Controller
             'message' => $result['message'] ?? null,
             'data' => $result['data'] ?? null,
             'error' => $result['error'] ?? null
-        ]);
+        ], $result['statusCode'] ?? 200);
     }
 }
