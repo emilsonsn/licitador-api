@@ -24,10 +24,6 @@ class Kernel extends ConsoleKernel
             ->dailyAt('00:00')
             ->withoutOverlapping();
 
-        $schedule->command('app:pncp-search')
-            ->dailyAt('23:00')
-            ->withoutOverlapping();
-
         $schedule->command('app:compras-api-search')->dailyAt('12:00');
         $schedule->command('app:automation-populate')->everyFiveMinutes();
     }

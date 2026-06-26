@@ -116,10 +116,6 @@ class UserService
                 'address' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:255',
                 'state' => 'nullable|string|max:255',
-                'cnpj' => 'nullable|string|max:255',
-                'corporate_reason' => 'nullable|string|max:255',
-                'fantasy_name' => 'nullable|string|max:255',
-                'opening_date' => 'nullable|date',
                 'has_notification' => 'nullable|boolean',
             ];
 
