@@ -10,6 +10,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FilterController;
+use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TenderController;
 use App\Http\Controllers\UserController;
@@ -72,6 +73,16 @@ Route::middleware(['jwt', UserStatusMiddleware::class])->group(function(){
     Route::prefix('company')->group(function(){
         Route::get('/', [CompanyController::class, 'getCompany']);
         Route::post('/', [CompanyController::class, 'createOrUpdate']);
+    });
+
+    Route::prefix('proposal')->group(function(){
+        Route::get('/', [ProposalController::class, 'search']);
+        Route::post('fill', [ProposalController::class, 'fill']);
+        Route::post('/', [ProposalController::class, 'create']);
+        Route::get('{id}', [ProposalController::class, 'get']);
+        Route::patch('{id}', [ProposalController::class, 'update']);
+        Route::delete('{id}', [ProposalController::class, 'delete']);
+        Route::get('{id}/view', [ProposalController::class, 'view']);
     });
 
     Route::prefix('file')->group(function(){

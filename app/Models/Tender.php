@@ -55,4 +55,9 @@ class Tender extends Model
     public function calendarTenders(){
         return $this->hasMany(CalendarTender::class);
     }
+
+    public function proposals()
+    {
+        return $this->hasMany(Proposal::class);
+    }
 }
