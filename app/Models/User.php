@@ -36,10 +36,6 @@ class User extends Authenticatable implements JWTSubject
         'address',
         'city',
         'state',
-        'cnpj',
-        'corporate_reason',
-        'fantasy_name',
-        'opening_date',
     ];
 
     /**
@@ -82,5 +78,15 @@ class User extends Authenticatable implements JWTSubject
 
     public function files()  {
         return $this->hasMany(File::class);        
+    }
+
+    public function company()
+    {
+        return $this->hasOne(Company::class);
+    }
+
+    public function proposals()
+    {
+        return $this->hasMany(Proposal::class);
     }
 }

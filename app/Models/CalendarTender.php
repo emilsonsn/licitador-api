@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CalendarTenderStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,6 +19,11 @@ class CalendarTender extends Model
     protected $fillable = [
         'tender_id',
         'user_id',
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => CalendarTenderStatus::class,
     ];
 
     public function tender()
