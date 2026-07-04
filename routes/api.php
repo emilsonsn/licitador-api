@@ -98,6 +98,7 @@ Route::middleware(['jwt', UserStatusMiddleware::class])->group(function(){
 
         Route::prefix('dashboard')->group(function(){
             Route::get('search', [DashboardController::class, 'search']);
+            Route::get('indicators', [DashboardController::class, 'indicators']);
             Route::get('userGraph', [DashboardController::class, 'userGraph']);
         });
 

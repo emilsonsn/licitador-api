@@ -21,6 +21,12 @@ class DashboardController extends Controller
         return $this->formatResponse($result);
     }
 
+    public function indicators(): JsonResponse
+    {
+        $result = $this->dashboardService->indicators();
+        return $this->formatResponse($result);
+    }
+
     public function userGraph(Request $request): JsonResponse
     {
         $request->validate([
