@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 trait PncpTrait
 {
-    private function pncpClient(): Client
+    protected function pncpClient(): Client
     {
         $options = [
             'connect_timeout' => config('services.pncp.connect_timeout', 15),
@@ -203,18 +203,45 @@ trait PncpTrait
     {
         $client = $this->pncpClient();
         $url = "https://pncp.gov.br/api/pncp/v1/orgaos/{$cnpj}/compras/{$ano}/{$sequencial}/itens";
+        $items = [];
+        $pagina = 1;
+        $tamanhoPagina = 100;
 
         try {
-            $response = $client->request('GET', $url, ['query' => []]);
+            while (true) {
+                $response = $client->request('GET', $url, [
+                    'query' => [
+                        'pagina' => $pagina,
+                        'tamanhoPagina' => $tamanhoPagina,
+                    ],
+                    'http_errors' => false,
+                ]);
 
-            $statusCode = $response->getStatusCode();
-            $body = json_decode($response->getBody()->getContents(), true);
+                $statusCode = $response->getStatusCode();
+                $body = json_decode($response->getBody()->getContents(), true);
 
-            if ($statusCode !== 200 || !isset($body) || !count($body)) {
+                if ($statusCode !== 200 || ! is_array($body)) {
+                    return ['status' => false, 'error' => 'Não foi possível obter os dados.'];
+                }
+
+                if (! count($body)) {
+                    break;
+                }
+
+                $items = array_merge($items, $body);
+
+                if (count($body) < $tamanhoPagina) {
+                    break;
+                }
+
+                $pagina++;
+            }
+
+            if (! count($items)) {
                 return ['status' => false, 'error' => 'Não foi possível obter os dados.'];
-            } 
+            }
 
-            return ['status' => true, 'data' => $body];
+            return ['status' => true, 'data' => $items];
 
         } catch (\Exception $e) {
             return ['status' => false, 'error' => $e->getMessage()];
