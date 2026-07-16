@@ -32,4 +32,14 @@ class ProposalItem extends Model
     {
         return $this->belongsTo(Proposal::class);
     }
+
+    public function trackingItem()
+    {
+        return $this->hasOne(ProposalTrackingItem::class);
+    }
+
+    public function catalogItem()
+    {
+        return $this->hasOne(ProposalCatalogItem::class);
+    }
 }

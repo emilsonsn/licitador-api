@@ -101,6 +101,19 @@ class TenderService
                 $tenders->where('observations', 'LIKE', "%$observations%");
             }
 
+            if ($request->filled('origin_domains')) {
+                $originDomains = $this->normalizeListFilter($request->input('origin_domains'));
+
+                if (! empty($originDomains)) {
+                    $tenders->where(function ($query) use ($originDomains) {
+                        foreach ($originDomains as $originDomain) {
+                            $escapedDomain = addcslashes($originDomain, '\\%_');
+                            $query->orWhere('origin_url', 'LIKE', $escapedDomain.'%');
+                        }
+                    });
+                }
+            }
+
             if ($request->input('proposal_closing_date_start') && $request->input('proposal_closing_date_end')) {
                 if($request->proposal_closing_date_start == $request->proposal_closing_date_end){
                     $tenders->whereDate('proposal_closing_date_start', $request->proposal_closing_date_start);
@@ -155,6 +168,16 @@ class TenderService
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
         }
+    }
+
+    private function normalizeListFilter(array|string $value): array
+    {
+        $values = is_array($value) ? $value : explode(',', $value);
+
+        return array_values(array_unique(array_filter(
+            array_map(fn ($item) => trim((string) $item), $values),
+            fn ($item) => $item !== ''
+        )));
     }
 
     public function delete($tender_id){
@@ -237,13 +260,16 @@ class TenderService
                         $query->whereIn('status', $statuses);
                     }
                 })
-                ->orderBy('bid_opening_date')
                 ->get()
                 ->map(function ($tender) {
-                    $tender->calendar_status = $tender->calendarTenders->first()?->status?->value;
+                    $calendarTender = $tender->calendarTenders->first();
+                    $tender->calendar_status = $calendarTender?->status?->value;
+                    $tender->calendar_date = $calendarTender?->calendar_date;
 
                     return $tender;
-                });
+                })
+                ->sortBy(fn ($tender) => $tender->calendar_date ?? $tender->bid_opening_date)
+                ->values();
 
             return ['status' => true, 'data' => $tenders];
         } catch (Exception $error) {
@@ -256,13 +282,14 @@ class TenderService
         try {
             $validator = Validator::make($request->all(), [
                 'status' => ['nullable', new Enum(CalendarTenderStatus::class)],
+                'calendar_date' => ['nullable', 'date'],
             ]);
 
             if ($validator->fails()) {
                 return ['status' => false, 'error' => $validator->errors(), 'statusCode' => 400];
             }
 
-            Tender::findOrFail($tender_id);
+            $tender = Tender::findOrFail($tender_id);
 
             $user = Auth::user();
             $calendarTender = CalendarTender::where('tender_id', $tender_id)
@@ -270,11 +297,18 @@ class TenderService
                 ->first();
 
             if ($calendarTender) {
-                if ($request->filled('status')) {
-                    $calendarTender->status = $request->input('status');
+                if ($request->filled('status') || $request->has('calendar_date')) {
+                    if ($request->filled('status')) {
+                        $calendarTender->status = $request->input('status');
+                    }
+
+                    if ($request->has('calendar_date')) {
+                        $calendarTender->calendar_date = $request->input('calendar_date');
+                    }
+
                     $calendarTender->save();
 
-                    return ['status' => true, 'data' => ['marked' => true, 'calendar_status' => $calendarTender->status->value]];
+                    return ['status' => true, 'data' => $this->calendarTenderResponse($calendarTender)];
                 }
 
                 CalendarTender::where('tender_id', $tender_id)
@@ -288,12 +322,22 @@ class TenderService
                 'tender_id' => $tender_id,
                 'user_id' => $user->id,
                 'status' => $request->input('status', CalendarTenderStatus::Participating->value),
+                'calendar_date' => $request->input('calendar_date', $tender->bid_opening_date),
             ]);
 
-            return ['status' => true, 'data' => ['marked' => true, 'calendar_status' => $calendarTender->status->value]];
+            return ['status' => true, 'data' => $this->calendarTenderResponse($calendarTender)];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
         }
+    }
+
+    private function calendarTenderResponse(CalendarTender $calendarTender): array
+    {
+        return [
+            'marked' => true,
+            'calendar_status' => $calendarTender->status->value,
+            'calendar_date' => $calendarTender->calendar_date?->toISOString(),
+        ];
     }
 
     public function createAll($tendersData)

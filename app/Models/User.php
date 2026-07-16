@@ -15,6 +15,7 @@ class User extends Authenticatable implements JWTSubject
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
 
     /**
@@ -68,16 +69,19 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public function favorites(){
+    public function favorites()
+    {
         return $this->hasMany(FavoriteTender::class);
     }
 
-    public function calendarTenders(){
+    public function calendarTenders()
+    {
         return $this->hasMany(CalendarTender::class);
     }
 
-    public function files()  {
-        return $this->hasMany(File::class);        
+    public function files()
+    {
+        return $this->hasMany(File::class);
     }
 
     public function company()
@@ -88,5 +92,10 @@ class User extends Authenticatable implements JWTSubject
     public function proposals()
     {
         return $this->hasMany(Proposal::class);
+    }
+
+    public function proposalCatalogs()
+    {
+        return $this->hasMany(ProposalCatalog::class);
     }
 }
