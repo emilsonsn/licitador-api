@@ -101,6 +101,19 @@ class TenderService
                 $tenders->where('observations', 'LIKE', "%$observations%");
             }
 
+            if ($request->filled('origin_domains')) {
+                $originDomains = $this->normalizeListFilter($request->input('origin_domains'));
+
+                if (! empty($originDomains)) {
+                    $tenders->where(function ($query) use ($originDomains) {
+                        foreach ($originDomains as $originDomain) {
+                            $escapedDomain = addcslashes($originDomain, '\\%_');
+                            $query->orWhere('origin_url', 'LIKE', $escapedDomain.'%');
+                        }
+                    });
+                }
+            }
+
             if ($request->input('proposal_closing_date_start') && $request->input('proposal_closing_date_end')) {
                 if($request->proposal_closing_date_start == $request->proposal_closing_date_end){
                     $tenders->whereDate('proposal_closing_date_start', $request->proposal_closing_date_start);
@@ -155,6 +168,16 @@ class TenderService
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage()];
         }
+    }
+
+    private function normalizeListFilter(array|string $value): array
+    {
+        $values = is_array($value) ? $value : explode(',', $value);
+
+        return array_values(array_unique(array_filter(
+            array_map(fn ($item) => trim((string) $item), $values),
+            fn ($item) => $item !== ''
+        )));
     }
 
     public function delete($tender_id){
