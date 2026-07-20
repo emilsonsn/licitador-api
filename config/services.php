@@ -43,4 +43,17 @@ return [
         'proxy' => env('PNCP_PROXY'),
     ],
 
+    'localizador_editais' => [
+        'base_url' => env('LOCALIZADOR_EDITAIS_BASE_URL', 'https://painel.localizadordeeditais.com.br'),
+        'username' => env('LOCALIZADOR_EDITAIS_USERNAME'),
+        'password' => env('LOCALIZADOR_EDITAIS_PASSWORD'),
+        'python_binary' => env('LOCALIZADOR_EDITAIS_PYTHON_BINARY', 'python3'),
+        'browser_binary' => env('LOCALIZADOR_EDITAIS_BROWSER_BINARY', '/usr/bin/google-chrome'),
+        'browser_headless' => env('LOCALIZADOR_EDITAIS_BROWSER_HEADLESS', true),
+        'browser_timeout' => env('LOCALIZADOR_EDITAIS_BROWSER_TIMEOUT', 120),
+        'connect_timeout' => env('LOCALIZADOR_EDITAIS_CONNECT_TIMEOUT', 15),
+        'timeout' => env('LOCALIZADOR_EDITAIS_TIMEOUT', 45),
+        'user_agent' => env('LOCALIZADOR_EDITAIS_USER_AGENT', 'Licitador API'),
+    ],
+
 ];

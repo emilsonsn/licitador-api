@@ -3,26 +3,81 @@
 namespace App\Services\Routines;
 
 use App\Models\SystemLog;
-use App\Models\Tender;
 use App\Services\Tender\TenderService;
 use App\Traits\AlertaLicitacaoTrait;
 use App\Traits\ComprasApiTrait;
+use App\Traits\LocalizadorEditaisTrait;
 use App\Traits\PCPTrait;
-use Exception;
 use App\Traits\PncpTrait;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class RoutinesService
 {
-
     private $tenderService;
 
-    public function __construct(TenderService $tenderService) {
+    public function __construct(TenderService $tenderService)
+    {
         $this->tenderService = $tenderService;
     }
 
-    use PncpTrait, PCPTrait, AlertaLicitacaoTrait, ComprasApiTrait;
+    use AlertaLicitacaoTrait, ComprasApiTrait, LocalizadorEditaisTrait, PCPTrait, PncpTrait;
+
+    public function populate_database_localizador_editais(): bool
+    {
+        try {
+            Log::channel('tender_imports')->info('Iniciando Localizador de Editais');
+            $page = 1;
+            $perPage = 50;
+            $total = $this->emptyImportStats();
+
+            do {
+                $result = $this->searchDataLocalizadorEditais($page, $perPage);
+
+                if (! $result['status']) {
+                    throw new Exception($result['error'] ?? 'Falha ao consultar o Localizador de Editais.');
+                }
+
+                $rows = $result['data'];
+                if (empty($rows)) {
+                    break;
+                }
+
+                $stats = $this->tenderService->createAllLocalizadorEditais($rows);
+                $total = $this->mergeImportStats($total, $stats);
+
+                Log::channel('tender_imports')->info('Localizador de Editais: página importada', [
+                    'pagina' => $page,
+                    'recebidas_api' => $stats['received'],
+                    'criadas' => $stats['created'],
+                    'atualizadas' => $stats['updated'],
+                ]);
+
+                $page++;
+            } while (($page - 1) * $perPage < $result['total']);
+
+            Log::channel('tender_imports')->info('Localizador de Editais: importação finalizada', [
+                'total_recebidas_api' => $total['received'],
+                'total_criadas' => $total['created'],
+                'total_atualizadas' => $total['updated'],
+            ]);
+
+            return true;
+        } catch (Exception $error) {
+            Log::channel('tender_imports')->error('Erro ao importar Localizador de Editais', [
+                'error' => $error->getMessage(),
+            ]);
+            SystemLog::create([
+                'action' => 'populate_database_localizador_editais',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
 
     public function populate_database()
     {
@@ -33,21 +88,21 @@ class RoutinesService
             $ufs = $this->getUfs();
             $total = $this->emptyImportStats();
 
-            foreach($ufs as $uf){
-                foreach($modalitys as $modality ){
+            foreach ($ufs as $uf) {
+                foreach ($modalitys as $modality) {
                     $pagina = 1;
-                    while ($pagina < 20){
+                    while ($pagina < 20) {
                         $data = [
                             'dataFinal' => Carbon::now()->addYear()->format('Ymd'),
                             'pagina' => $pagina,
                             'tamanhoPagina' => 30,
                             'uf' => $uf,
-                            'codigoModalidadeContratacao' => $modality
+                            'codigoModalidadeContratacao' => $modality,
                         ];
-    
+
                         $result = $this->searchDataPNCP($data);
-    
-                        if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+
+                        if (! $result['status'] || ! isset($result['data']) || ! count($result['data'])) {
                             Log::channel('tender_imports')->warning('PNCP sem dados para os filtros', [
                                 'uf' => $uf,
                                 'modalidade' => $modality,
@@ -77,7 +132,7 @@ class RoutinesService
                             'total_atualizadas' => $total['updated'],
                         ]);
 
-                        $pagina+=1;
+                        $pagina += 1;
                         sleep(1);
                     }
                 }
@@ -109,14 +164,14 @@ class RoutinesService
             $first = true;
             $total = $this->emptyImportStats();
 
-            while (true){
-                
+            while (true) {
+
                 $data = [
                     'pagina' => $pagina,
                 ];
                 $result = $this->searchDataPCP($data);
-                
-                if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+
+                if (! $result['status'] || ! isset($result['data']) || ! count($result['data'])) {
                     Log::channel('tender_imports')->warning('PCP sem dados para os filtros', [
                         'pagina' => $pagina,
                     ]);
@@ -127,18 +182,20 @@ class RoutinesService
                         'error' => $result['error'] ?? null,
                     ]);
                     sleep(60);
+
                     return;
                 }
 
-                if($result['paginaAtual'] === 1 and !$first) {
+                if ($result['paginaAtual'] === 1 and ! $first) {
                     Log::channel('tender_imports')->info('PCP: importação finalizada', [
                         'total_recebidas_api' => $total['received'],
                         'total_criadas' => $total['created'],
                         'total_atualizadas' => $total['updated'],
                     ]);
+
                     return;
                 }
-                
+
                 $stats = $this->tenderService->createAllPCP($result['data']);
                 $total = $this->mergeImportStats($total, $stats);
 
@@ -152,10 +209,10 @@ class RoutinesService
                     'total_atualizadas' => $total['updated'],
                 ]);
 
-                $pagina+=1;
+                $pagina += 1;
                 $first = false;
                 sleep(3);
-            }                                                                                                                                                                                              
+            }
         } catch (Exception $error) {
             Log::channel('tender_imports')->error('Erro ao importar PCP', [
                 'error' => $error->getMessage(),
@@ -174,31 +231,31 @@ class RoutinesService
         try {
             Log::channel('tender_imports')->info('Iniciando Compras API: iminência de deserto');
             $total = $this->emptyImportStats();
-            
-            for($page = 1; $page < 10; $page++){    
-                    $result = $this->getTenderImminenceDesert($page);
-    
-                    if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
-                        Log::channel('tender_imports')->warning('Compras API sem dados para os filtros', [
-                            'pagina' => $page,
-                        ]);
-                        break;
-                    }
-    
-                    $stats = $this->tenderService->createComprasAPI($result['data']);
-                    $total = $this->mergeImportStats($total, $stats);
 
-                    Log::channel('tender_imports')->info('Compras API: página importada', [
+            for ($page = 1; $page < 10; $page++) {
+                $result = $this->getTenderImminenceDesert($page);
+
+                if (! $result['status'] || ! isset($result['data']) || ! count($result['data'])) {
+                    Log::channel('tender_imports')->warning('Compras API sem dados para os filtros', [
                         'pagina' => $page,
-                        'recebidas_api' => $stats['received'],
-                        'criadas' => $stats['created'],
-                        'atualizadas' => $stats['updated'],
-                        'total_recebidas_api' => $total['received'],
-                        'total_criadas' => $total['created'],
-                        'total_atualizadas' => $total['updated'],
                     ]);
+                    break;
+                }
 
-                    sleep(1);
+                $stats = $this->tenderService->createComprasAPI($result['data']);
+                $total = $this->mergeImportStats($total, $stats);
+
+                Log::channel('tender_imports')->info('Compras API: página importada', [
+                    'pagina' => $page,
+                    'recebidas_api' => $stats['received'],
+                    'criadas' => $stats['created'],
+                    'atualizadas' => $stats['updated'],
+                    'total_recebidas_api' => $total['received'],
+                    'total_criadas' => $total['created'],
+                    'total_atualizadas' => $total['updated'],
+                ]);
+
+                sleep(1);
             }
 
             Log::channel('tender_imports')->info('Compras API: importação finalizada', [
@@ -220,7 +277,8 @@ class RoutinesService
         }
     }
 
-    public function populate_database_alerta_licitacao(array $filters){
+    public function populate_database_alerta_licitacao(array $filters)
+    {
         try {
             Log::channel('tender_imports')->info('Iniciando busca alerta licitação', $filters);
 
@@ -259,7 +317,7 @@ class RoutinesService
                 'total_criadas' => $total['created'],
                 'total_atualizadas' => $total['updated'],
             ]);
-                                                                                                
+
         } catch (Exception $error) {
             Log::channel('tender_imports')->error('Erro ao importar Alerta Licitação', [
                 'error' => $error->getMessage(),
@@ -273,7 +331,8 @@ class RoutinesService
         }
     }
 
-    public function automation_alerta_licitacao($state, $city){
+    public function automation_alerta_licitacao($state, $city)
+    {
         try {
             Log::channel('tender_imports')->info('Iniciando busca automática alerta licitação', [
                 'uf' => $state,
@@ -285,26 +344,26 @@ class RoutinesService
             $ufs = [$state];
             $dates = [];
             $total = $this->emptyImportStats();
-            
-            for($day =0; $day < 3; $day++) {
+
+            for ($day = 0; $day < 3; $day++) {
                 $dates[] = Carbon::now()->subDays($day)->format('Y-m-d');
             }
 
-            foreach($ufs as $uf){
-                foreach($modalitys as $modality ){
-                    foreach($dates as $data_insercao){
+            foreach ($ufs as $uf) {
+                foreach ($modalitys as $modality) {
+                    foreach ($dates as $data_insercao) {
                         $pagina = 1;
-                        while (true){
+                        while (true) {
                             $data = [
                                 'uf' => $uf,
                                 'modalidade' => $modality,
                                 'pagina' => $pagina,
-                                'data_insercao' => $data_insercao
+                                'data_insercao' => $data_insercao,
                             ];
-        
+
                             $result = $this->searchDataAlertaLicitacao($data);
-        
-                            if(!$result['status'] || !isset($result['data']) || !count($result['data'])){
+
+                            if (! $result['status'] || ! isset($result['data']) || ! count($result['data'])) {
                                 Log::channel('tender_imports')->warning('Automação Alerta Licitação sem dados para os filtros', [
                                     'uf' => $uf,
                                     'cidade' => $city,
@@ -315,9 +374,9 @@ class RoutinesService
                                 sleep(2);
                                 break;
                             }
-                            
+
                             sleep(2);
-        
+
                             $stats = $this->tenderService->createAllAlerta($result['data']);
                             $total = $this->mergeImportStats($total, $stats);
 
@@ -335,7 +394,7 @@ class RoutinesService
                                 'total_atualizadas' => $total['updated'],
                             ]);
 
-                            $pagina+=1;
+                            $pagina += 1;
                         }
                     }
                 }
@@ -348,7 +407,7 @@ class RoutinesService
                 'total_criadas' => $total['created'],
                 'total_atualizadas' => $total['updated'],
             ]);
-                                                                                                
+
         } catch (Exception $error) {
             Log::channel('tender_imports')->error('Erro ao importar automação Alerta Licitação', [
                 'uf' => $state,
@@ -364,7 +423,8 @@ class RoutinesService
         }
     }
 
-    private function getModality() : array {
+    private function getModality(): array
+    {
         $modalitys = [
             8,
             4,
@@ -375,7 +435,7 @@ class RoutinesService
             12,
             13,
 
-            // 1, // Leião - Eletrônico            
+            // 1, // Leião - Eletrônico
             // 2,
             // 3, // Concurso
             // 4,
@@ -395,15 +455,18 @@ class RoutinesService
             // 18,
             // 19
         ];
-        return $modalitys;
-    }    
 
-    private function getUfs() : array {
+        return $modalitys;
+    }
+
+    private function getUfs(): array
+    {
         $ufs = [
             'SP', 'MG', 'RJ', 'PR', 'RS', 'SC', 'BA', 'PE', 'GO', 'DF',
             'CE', 'ES', 'PA', 'MT', 'MS', 'MA', 'PB', 'RN', 'AL', 'PI',
-            'RO', 'AM', 'SE', 'TO', 'AC', 'AP', 'RR'
+            'RO', 'AM', 'SE', 'TO', 'AC', 'AP', 'RR',
         ];
+
         return $ufs;
     }
 
@@ -424,9 +487,7 @@ class RoutinesService
 
         return $current;
     }
-
 }
-
 
 //{ value: '1', label: 'Leilão - Eletrônico' },  1 -> 3
 //{ value: '13', label: 'Leilão - Presencial' }, 13 -> 3
