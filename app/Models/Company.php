@@ -10,6 +10,7 @@ class Company extends Model
     use HasFactory;
 
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
 
     public $table = 'companies';
@@ -47,7 +48,7 @@ class Company extends Model
             return $this->attributes['logo'];
         }
 
-        return url('storage/' . $this->attributes['logo']);
+        return url('storage/'.$this->attributes['logo']);
     }
 
     public function user()
@@ -58,5 +59,10 @@ class Company extends Model
     public function proposals()
     {
         return $this->hasMany(Proposal::class);
+    }
+
+    public function proposalCatalogs()
+    {
+        return $this->hasMany(ProposalCatalog::class);
     }
 }

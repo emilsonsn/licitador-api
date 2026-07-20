@@ -63,4 +63,14 @@ class Proposal extends Model
     {
         return $this->hasMany(ProposalItem::class);
     }
+
+    public function tracking()
+    {
+        return $this->hasOne(ProposalTracking::class);
+    }
+
+    public function catalog()
+    {
+        return $this->hasOne(ProposalCatalog::class);
+    }
 }

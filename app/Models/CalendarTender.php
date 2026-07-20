@@ -20,10 +20,12 @@ class CalendarTender extends Model
         'tender_id',
         'user_id',
         'status',
+        'calendar_date',
     ];
 
     protected $casts = [
         'status' => CalendarTenderStatus::class,
+        'calendar_date' => 'datetime',
     ];
 
     public function tender()
