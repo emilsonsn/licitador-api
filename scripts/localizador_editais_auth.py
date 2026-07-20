@@ -5,14 +5,12 @@ import json
 import os
 import stat
 import sys
-import time
 from pathlib import Path
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -102,22 +100,45 @@ def login(driver: webdriver.Chrome, base_url: str, username: str, password: str)
     if wordpress_session_exists(driver):
         return
 
-    username_input = wait.until(EC.element_to_be_clickable((By.NAME, "user_login")))
-    password_input = wait.until(EC.element_to_be_clickable((By.NAME, "user_pass")))
-    username_input.clear()
-    username_input.send_keys(username)
-    password_input.clear()
-    password_input.send_keys(password)
+    wait.until(lambda current: current.execute_script(
+        "return Boolean(document.querySelector('[name=user_login]') && document.querySelector('[name=user_pass]'));"
+    ))
+    submitted = driver.execute_script(
+        """
+        const username = document.querySelector('[name="user_login"]');
+        const password = document.querySelector('[name="user_pass"]');
+        const form = password?.closest('form');
+        const submit = form?.querySelector('button[type="submit"], input[type="submit"]');
+        if (!username || !password || !form || !submit) return false;
 
-    form = password_input.find_element(By.XPATH, "ancestor::form")
-    submit = form.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']")
-    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", submit)
-    submit.click()
+        const setValue = (element, value) => {
+            const setter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype,
+                'value'
+            ).set;
+            setter.call(element, value);
+            element.dispatchEvent(new Event('input', {bubbles: true}));
+            element.dispatchEvent(new Event('change', {bubbles: true}));
+            element.dispatchEvent(new Event('blur', {bubbles: true}));
+        };
+
+        setValue(username, arguments[0]);
+        setValue(password, arguments[1]);
+        submit.scrollIntoView({block: 'center'});
+        submit.click();
+        return true;
+        """,
+        username,
+        password,
+    )
+
+    if not submitted:
+        raise RuntimeError("Não foi possível localizar o formulário de login do ARMember.")
 
     try:
         WebDriverWait(driver, 60).until(lambda current: wordpress_session_exists(current))
     except TimeoutException as error:
-        messages = form.find_elements(By.CSS_SELECTOR, ".arm_error_msg, .arm-df__fc--validation, .error")
+        messages = driver.find_elements(By.CSS_SELECTOR, ".arm_error_msg, .arm-df__fc--validation, .error")
         detail = " ".join(message.text.strip() for message in messages if message.text.strip())
         raise RuntimeError(f"O ARMember não concluiu o login. {detail}".strip()) from error
 
