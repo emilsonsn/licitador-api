@@ -3,17 +3,17 @@
 namespace App\Services\Tender;
 
 use App\Enums\CalendarTenderStatus;
-use App\Models\FavoriteTender;
 use App\Models\CalendarTender;
+use App\Models\FavoriteTender;
 use App\Models\Note;
 use App\Models\SystemLog;
-use App\Traits\ComprasApiTrait;
-use Exception;
 use App\Models\Tender;
 use App\Traits\AlertaLicitacaoTrait;
+use App\Traits\ComprasApiTrait;
 use App\Traits\PCPTrait;
 use App\Traits\PncpTrait;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -21,8 +21,8 @@ use Illuminate\Validation\Rules\Enum;
 
 class TenderService
 {
+    use AlertaLicitacaoTrait, ComprasApiTrait, PCPTrait, PncpTrait;
 
-    use PCPTrait, PncpTrait, AlertaLicitacaoTrait, ComprasApiTrait;
     public function search($request)
     {
         try {
@@ -30,12 +30,16 @@ class TenderService
             $auth = Auth::user();
 
             $tenders = Tender::with([
-                'favorites' => function($query) use ($auth) {
-                    if($auth) $query->where('user_id', $auth->id);
+                'favorites' => function ($query) use ($auth) {
+                    if ($auth) {
+                        $query->where('user_id', $auth->id);
+                    }
                 },
-                'notes' => function($query) use ($auth) {
-                    if($auth) $query->where('user_id', $auth->id);
-                }
+                'notes' => function ($query) use ($auth) {
+                    if ($auth) {
+                        $query->where('user_id', $auth->id);
+                    }
+                },
             ]);
 
             // $tenders->where('api_origin', '!=', 'PNCP');
@@ -46,7 +50,7 @@ class TenderService
 
             if ($request->input('favorite') == 'true') {
                 $user_id = $auth->id;
-                $tenders->whereHas('favorites', function($query) use ($user_id) {
+                $tenders->whereHas('favorites', function ($query) use ($user_id) {
                     $query->where('user_id', $user_id);
                 });
             }
@@ -81,12 +85,13 @@ class TenderService
 
             if ($request->input('object')) {
                 $objects = explode(',', $request->input('object'));
-                $tenders->where(function($query) use ($objects) {
+                $tenders->where(function ($query) use ($objects) {
                     foreach ($objects as $indice => $object) {
-                        if (!$indice)
+                        if (! $indice) {
                             $query->where('object', 'like', "%$object%");
-                        else
+                        } else {
                             $query->orWhere('object', 'like', "%$object%");
+                        }
                     }
                 });
             }
@@ -115,11 +120,11 @@ class TenderService
             }
 
             if ($request->input('proposal_closing_date_start') && $request->input('proposal_closing_date_end')) {
-                if($request->proposal_closing_date_start == $request->proposal_closing_date_end){
+                if ($request->proposal_closing_date_start == $request->proposal_closing_date_end) {
                     $tenders->whereDate('proposal_closing_date_start', $request->proposal_closing_date_start);
-                }else{
+                } else {
                     $tenders->whereBetween('proposal_closing_date', [$request->input('proposal_closing_date_start'), $request->input('proposal_closing_date_end')]);
-                }                
+                }
             } elseif ($request->input('proposal_closing_date_start')) {
                 $tenders->whereDate('proposal_closing_date', '>=', $request->input('proposal_closing_date_start'));
             } elseif ($request->input('proposal_closing_date_end')) {
@@ -127,9 +132,9 @@ class TenderService
             }
 
             if ($request->input('publication_date_start') && $request->input('publication_date_end')) {
-                if($request->publication_date_start == $request->publication_date_end){
+                if ($request->publication_date_start == $request->publication_date_end) {
                     $tenders->whereDate('publication_date', $request->publication_date_start);
-                }else{
+                } else {
                     $tenders->whereBetween('publication_date', [$request->input('publication_date_start'), $request->input('publication_date_end')]);
                 }
             } elseif ($request->input('publication_date_start')) {
@@ -141,11 +146,11 @@ class TenderService
             if ($request->input('update_date_start') && $request->input('update_date_end')) {
                 $request->orderField = 'proposal_closing_date';
                 $request->order = 'asc';
-                if($request->update_date_start == $request->update_date_end){
+                if ($request->update_date_start == $request->update_date_end) {
                     $tenders->whereDate('proposal_closing_date', $request->update_date_start);
-                }else{
+                } else {
                     $tenders->whereBetween('proposal_closing_date', [$request->input('update_date_start'), $request->input('update_date_end')]);
-                }                
+                }
             } elseif ($request->input('update_date_start')) {
                 $request->orderField = 'proposal_closing_date';
                 $request->order = 'asc';
@@ -157,7 +162,7 @@ class TenderService
             }
 
             $orderField = $request->orderField ?? 'proposal_closing_date';
-            $order = $request->order ?? 'desc';            
+            $order = $request->order ?? 'desc';
 
             $tenders = $tenders
                 ->orderBy($orderField, $order)
@@ -180,15 +185,16 @@ class TenderService
         )));
     }
 
-    public function delete($tender_id){
-        $tenderToDelete = Tender::findOrFail($tender_id);        
+    public function delete($tender_id)
+    {
+        $tenderToDelete = Tender::findOrFail($tender_id);
 
         $process = $tenderToDelete->process;
         $tenderToDelete->delete();
-        
+
         return [
             'status' => true,
-            'data' => $process
+            'data' => $process,
         ];
     }
 
@@ -197,27 +203,29 @@ class TenderService
         try {
             $tender = Tender::find($tender_id);
 
-            if(!isset($tender)) throw new Exception('Licitação não encontrada');
+            if (! isset($tender)) {
+                throw new Exception('Licitação não encontrada');
+            }
 
-            if($tender->api_origin == 'PNCP'){
+            if (in_array($tender->api_origin, ['PNCP', 'LOCALIZADOR_EDITAIS'], true)) {
                 $result = $this->getItemsPNCP($tender->organ_cnpj, $tender->year_purchase, $tender->sequential_purchase);
-            }else if($tender->api_origin == 'PCP'){
+            } elseif ($tender->api_origin == 'PCP') {
                 $result = $this->getItemPCP($tender->id_licitacao);
-            }else if($tender->api_origin == 'ALERTALICITACAO'){
+            } elseif ($tender->api_origin == 'ALERTALICITACAO') {
                 $data = $this->getDataPNCP($tender);
 
-                if(!isset($data['cnpj'], $data['year'], $data['sequential'])){
+                if (! isset($data['cnpj'], $data['year'], $data['sequential'])) {
                     throw new Exception('Não foi possível obter dados do PNCP para essa licitação');
                 }
 
                 $result = $this->getItemsPNCP($data['cnpj'], $data['year'], $data['sequential']);
-            }else if($tender->api_origin == 'COMPRASAPI'){
+            } elseif ($tender->api_origin == 'COMPRASAPI') {
                 $result = $this->getItemsComprasApi($tender->id_licitacao);
-            }else{
+            } else {
                 throw new Exception('Origem da licitação não suportada para busca de itens');
             }
 
-            if(!isset($result['status']) || !$result['status']){
+            if (! isset($result['status']) || ! $result['status']) {
                 throw new Exception($result['error'] ?? 'Não foi possível obter os itens');
             }
 
@@ -227,19 +235,21 @@ class TenderService
         }
     }
 
-    public function favorite($tender_id){
+    public function favorite($tender_id)
+    {
         $favoriteTender = FavoriteTender::where('tender_id', $tender_id)->first();
         $auth = auth()->user();
 
-        if(isset($favoriteTender)){
+        if (isset($favoriteTender)) {
             $favoriteTender->delete();
             $favoriteTender = null;
-        }else{
+        } else {
             $favoriteTender = FavoriteTender::create([
                 'tender_id' => $tender_id,
-                'user_id' => $auth->id
+                'user_id' => $auth->id,
             ]);
         }
+
         return ['status' => true, 'data' => $favoriteTender];
     }
 
@@ -372,7 +382,7 @@ class TenderService
                     'proposal_closing_date' => $tenderData['dataEncerramentoProposta'] ?? null,
                     'publication_date' => $tenderData['dataPublicacaoPncp'] ?? null,
                     'update_date' => $tenderData['dataAtualizacao'] ?? null,
-                    'api_origin' => 'PNCP'
+                    'api_origin' => 'PNCP',
                 ];
 
                 if (count($tenders) >= $batchSize) {
@@ -380,13 +390,13 @@ class TenderService
                     $tenders = [];
                 }
             }
-            
-            if (!empty($tenders)) {
+
+            if (! empty($tenders)) {
                 $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
 
             return $stats;
-            
+
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'createAll',
@@ -416,7 +426,7 @@ class TenderService
                     'year_purchase' => $tenderData['ANO_LICITACAO'] ?? null,
                     'number_purchase' => $tenderData['NUMERO'] ?? null,
                     'sequential_purchase' => null,
-                    'organ_cnpj' =>  null,
+                    'organ_cnpj' => null,
                     'organ_name' => $tenderData['unidadeCompradora']['nomeUnidadeCompradora'] ?? null,
                     'uf' => $tenderData['unidadeCompradora']['UF'] ?? null,
                     'city' => $tenderData['unidadeCompradora']['Cidade'] ?? null,
@@ -425,13 +435,13 @@ class TenderService
                     'object' => $tenderData['DS_OBJETO'] ?? null,
                     'instrument_name' => null,
                     'observations' => null,
-                    'origin_url' =>  null,
+                    'origin_url' => null,
                     'process' => $tenderData['NR_PROCESSO'] ?? null,
                     'bid_opening_date' => isset($tenderData['dataInicioPropostas']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataInicioPropostas'])->format('Y-m-d') : null,
                     'proposal_closing_date' => isset($tenderData['dataFinalPropostas']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataFinalPropostas'])->format('Y-m-d') : null,
                     'publication_date' => isset($tenderData['dataPublicacao']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataPublicacao'])->format('Y-m-d') : null,
                     'update_date' => isset($tenderData['dataPublicacao']) ? Carbon::createFromFormat('d/m/Y', $tenderData['dataPublicacao'])->format('Y-m-d') : null,
-                    'api_origin' => 'PCP'
+                    'api_origin' => 'PCP',
                 ];
 
                 if (count($tenders) >= $batchSize) {
@@ -439,13 +449,13 @@ class TenderService
                     $tenders = [];
                 }
             }
-            
-            if (!empty($tenders)) {
+
+            if (! empty($tenders)) {
                 $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
 
             return $stats;
-            
+
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'createAll',
@@ -473,7 +483,7 @@ class TenderService
                         $cnpj = $parts[1];
                     }
                 }
-                
+
                 $purchaseYear = (explode('/', $tenderData['abertura']))[2];
                 $titleSplit = explode(' ', $tenderData['titulo']);
                 $process = end($titleSplit);
@@ -501,7 +511,7 @@ class TenderService
                     'proposal_closing_date' => Carbon::parse($tenderData['abertura_datetime'])->format('Y-m-d H:i:s') ?? null,
                     'publication_date' => Carbon::now()->format('Y-m-d') ?? null,
                     'update_date' => Carbon::now()->format('Y-m-d') ?? null,
-                    'api_origin' => 'ALERTALICITACAO'
+                    'api_origin' => 'ALERTALICITACAO',
                 ];
 
                 if (count($tenders) >= $batchSize) {
@@ -509,13 +519,13 @@ class TenderService
                     $tenders = [];
                 }
             }
-            
-            if (!empty($tenders)) {
+
+            if (! empty($tenders)) {
                 $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
 
             return $stats;
-            
+
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'createAll',
@@ -534,7 +544,7 @@ class TenderService
             $tenders = [];
             $batchSize = 20;
             $stats = $this->emptyImportStats(count($tendersData));
-    
+
             foreach ($tendersData as $tenderData) {
 
                 $tenders[] = [
@@ -543,7 +553,7 @@ class TenderService
                     'modality' => $tenderData['tipoLicitacao']['modalidadeLicitacao'] ?? null,
                     'modality_id' => $tenderData['tipoLicitacao']['codigoModalidadeLicitacao'] ?? null,
                     'status' => $tenderData['status']['descricao'] ?? null,
-                    'year_purchase' => (int)substr($tenderData['identificacao'], -4) ?? null,
+                    'year_purchase' => (int) substr($tenderData['identificacao'], -4) ?? null,
                     'number_purchase' => $tenderData['numero'] ?? null,
                     'sequential_purchase' => null,
                     'organ_cnpj' => null,
@@ -555,27 +565,27 @@ class TenderService
                     'object' => $tenderData['resumo'] ?? null,
                     'instrument_name' => null,
                     'observations' => null,
-                    'origin_url' => 'https://www.portaldecompraspublicas.com.br/processos' . ($tenderData['urlReferencia'] ?? null),
+                    'origin_url' => 'https://www.portaldecompraspublicas.com.br/processos'.($tenderData['urlReferencia'] ?? null),
                     'process' => $tenderData['identificacao'],
                     'bid_opening_date' => $this->formatDateTime($tenderData['dataHoraInicioPropostas'] ?? null),
                     'proposal_closing_date' => $this->formatDateTime($tenderData['dataHoraFinalPropostas'] ?? null),
                     'publication_date' => $this->formatDateTime($tenderData['dataHoraPublicacao'] ?? null),
                     'update_date' => null,
-                    'api_origin' => 'COMPRASAPI'
+                    'api_origin' => 'COMPRASAPI',
                 ];
-    
+
                 if (count($tenders) >= $batchSize) {
                     $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
                     $tenders = [];
                 }
             }
-            
-            if (!empty($tenders)) {
+
+            if (! empty($tenders)) {
                 $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders));
             }
 
             return $stats;
-            
+
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'createAll',
@@ -587,8 +597,103 @@ class TenderService
             return $this->emptyImportStats(count($tendersData));
         }
     }
-    
-    public function noteStore($request){
+
+    public function createAllLocalizadorEditais(array $tendersData): array
+    {
+        try {
+            $tenders = [];
+            $stats = $this->emptyImportStats(count($tendersData));
+
+            foreach ($tendersData as $tenderData) {
+                [$cnpj, $year, $sequential] = $this->parseLocalizadorEditalNumber(
+                    (string) ($tenderData['numero_edital'] ?? '')
+                );
+
+                $tenders[] = [
+                    'id_licitacao' => $tenderData['id'] ?? null,
+                    'value' => $tenderData['valor_estimado'] ?? null,
+                    'modality' => $tenderData['modalidade'] ?? null,
+                    'modality_id' => $this->localizadorModalityId($tenderData['modalidade'] ?? null),
+                    'status' => $tenderData['situacao'] ?? null,
+                    'year_purchase' => $year,
+                    'number_purchase' => $tenderData['numero_edital'] ?? null,
+                    'sequential_purchase' => $sequential,
+                    'organ_cnpj' => $tenderData['orgao_cnpj'] ?? $cnpj,
+                    'organ_name' => $tenderData['orgao_nome'] ?? null,
+                    'uf' => $tenderData['uf'] ?? null,
+                    'city' => $tenderData['cidade'] ?? null,
+                    'city_code' => $tenderData['capag']['codigo_municipio'] ?? null,
+                    'description' => null,
+                    'object' => $tenderData['objeto'] ?? null,
+                    'instrument_name' => $tenderData['modalidade'] ?? null,
+                    'observations' => $tenderData['pncp_plataforma_nome'] ?? null,
+                    'origin_url' => ! empty($tenderData['pncp_link_sistema_origem'])
+                        ? $tenderData['pncp_link_sistema_origem']
+                        : ($tenderData['url_site_oficial'] ?? null),
+                    'process' => $tenderData['numero_edital'] ?? $tenderData['id'] ?? null,
+                    'bid_opening_date' => $tenderData['data_abertura'] ?? null,
+                    'proposal_closing_date' => $tenderData['data_prazo'] ?? null,
+                    'publication_date' => null,
+                    'update_date' => null,
+                    'api_origin' => 'LOCALIZADOR_EDITAIS',
+                ];
+
+                if (count($tenders) >= 20) {
+                    $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders, true));
+                    $tenders = [];
+                }
+            }
+
+            if (! empty($tenders)) {
+                $stats = $this->mergeImportStats($stats, $this->insertBatch($tenders, true));
+            }
+
+            return $stats;
+        } catch (Exception $error) {
+            SystemLog::create([
+                'action' => 'createAllLocalizadorEditais',
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+                'error' => $error->getMessage(),
+            ]);
+
+            return $this->emptyImportStats(count($tendersData));
+        }
+    }
+
+    private function parseLocalizadorEditalNumber(string $number): array
+    {
+        if (preg_match('/^(\d{14})-\d+-(\d+)\/(\d{4})$/', $number, $matches)) {
+            return [$matches[1], (int) $matches[3], (int) $matches[2]];
+        }
+
+        return [null, null, null];
+    }
+
+    private function localizadorModalityId(?string $modality): ?int
+    {
+        $normalized = mb_strtolower(trim((string) $modality));
+
+        return match ($normalized) {
+            'leilão - eletrônico', 'leilao - eletronico' => 1,
+            'diálogo competitivo', 'dialogo competitivo' => 2,
+            'concurso' => 3,
+            'concorrência - eletrônica', 'concorrencia - eletronica' => 4,
+            'concorrência - presencial', 'concorrencia - presencial' => 5,
+            'pregão - eletrônico', 'pregao - eletronico', 'pregão eletrônico', 'pregao eletronico' => 6,
+            'pregão - presencial', 'pregao - presencial', 'pregão presencial', 'pregao presencial' => 7,
+            'dispensa de licitação', 'dispensa de licitacao' => 8,
+            'inexigibilidade' => 9,
+            'manifestação de interesse', 'manifestacao de interesse' => 10,
+            'pré-qualificação', 'pre-qualificacao' => 11,
+            'credenciamento' => 12,
+            'leilão - presencial', 'leilao - presencial' => 13,
+            default => null,
+        };
+    }
+
+    public function noteStore($request)
+    {
         try {
             $note = Note::create([
                 'note' => $request->note,
@@ -597,7 +702,7 @@ class TenderService
             ]);
 
             return ['status' => true, 'data' => $note];
-            
+
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'noteStore',
@@ -608,11 +713,13 @@ class TenderService
         }
     }
 
-    public function noteDelete($id){
+    public function noteDelete($id)
+    {
         try {
             Note::find($id)->delete();
+
             return ['status' => true, 'data' => null];
-            
+
         } catch (Exception $error) {
             SystemLog::create([
                 'action' => 'noteStore',
@@ -623,34 +730,37 @@ class TenderService
         }
     }
 
-    public function edital($idLicitacao){
-        try{
+    public function edital($idLicitacao)
+    {
+        try {
             $tender = Tender::find($idLicitacao);
 
             $editais = [];
 
-            if($tender->api_origin == 'PNCP'){
+            if (in_array($tender->api_origin, ['PNCP', 'LOCALIZADOR_EDITAIS'], true)) {
                 $result = $this->getEditalPNCP($tender->organ_cnpj, $tender->year_purchase, $tender->sequential_purchase);
-            }else if($tender->api_origin == 'PCP'){
+            } elseif ($tender->api_origin == 'PCP') {
                 $result = $this->getEditalPCP($tender->id_licitacao);
-            }else if($tender->api_origin == 'ALERTALICITACAO'){
+            } elseif ($tender->api_origin == 'ALERTALICITACAO') {
                 $result = $this->getDataPNCP($tender);
-                if($result) {
+                if ($result) {
                     $result = $this->getEditalPNCP($result['cnpj'], $result['year'], $result['sequential']);
                 }
-            }else if($tender->api_origin == 'COMPRASAPI'){
+            } elseif ($tender->api_origin == 'COMPRASAPI') {
                 $result = $this->getEditalComprasApi($tender->id_licitacao);
-            }else{
+            } else {
                 $result = ['data' => []];
             }
 
-            if(isset($result['data'])) {
-                foreach($result['data'] as $edital){
+            if (isset($result['data'])) {
+                foreach ($result['data'] as $edital) {
                     $editais[] = $edital['url'];
                 }
             }
 
-            if(!isset($result['status'])) throw new Exception('Não foi possível obter editais para esse registro');
+            if (! isset($result['status'])) {
+                throw new Exception('Não foi possível obter editais para esse registro');
+            }
 
             return ['status' => true, 'data' => $editais];
         } catch (Exception $error) {
@@ -660,23 +770,38 @@ class TenderService
                 'line' => $error->getLine(),
                 'error' => $error->getMessage(),
             ]);
+
             return ['status' => false, 'error' => $error->getMessage()];
         }
     }
 
-    private function insertBatch(array $tenders)
+    private function insertBatch(array $tenders, bool $preserveExistingOnNull = false)
     {
         $stats = $this->emptyImportStats();
 
-        DB::transaction(function () use ($tenders, &$stats) {
+        DB::transaction(function () use ($tenders, $preserveExistingOnNull, &$stats) {
             foreach ($tenders as $tender) {
+                $identity = [
+                    'api_origin' => $tender['api_origin'],
+                    'process' => $tender['process'],
+                    'uf' => $tender['uf'],
+                    'city' => $tender['city'],
+                ];
+
+                if ($preserveExistingOnNull) {
+                    $existing = Tender::query()->where($identity)->first();
+
+                    if ($existing) {
+                        $existing->fill($this->removeNullValuesForUpdate($tender));
+                        $existing->save();
+                        $stats['updated']++;
+
+                        continue;
+                    }
+                }
+
                 $model = Tender::updateOrCreate(
-                    [
-                        'api_origin' => $tender['api_origin'],
-                        'process' => $tender['process'],
-                        'uf' => $tender['uf'],
-                        'city' => $tender['city'],
-                    ],
+                    $identity,
                     $tender
                 );
 
@@ -689,6 +814,11 @@ class TenderService
         });
 
         return $stats;
+    }
+
+    private function removeNullValuesForUpdate(array $data): array
+    {
+        return array_filter($data, static fn ($value) => $value !== null);
     }
 
     private function emptyImportStats(int $received = 0): array
@@ -712,9 +842,10 @@ class TenderService
     {
         if ($dateTime) {
             $date = \DateTime::createFromFormat(\DateTime::ISO8601, $dateTime);
+
             return $date ? $date->format('Y-m-d H:i:s') : null;
         }
+
         return null;
     }
-
-}   
+}
