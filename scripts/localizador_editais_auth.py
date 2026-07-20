@@ -43,7 +43,30 @@ def clear_stale_profile_lock(profile_dir: Path) -> None:
             path.unlink()
 
 
+def prepare_browser_environment(profile_dir: Path) -> None:
+    browser_home = profile_dir.parent / "localizador-editais-browser-home"
+    config_home = browser_home / ".config"
+    cache_home = browser_home / ".cache"
+    data_home = browser_home / ".local" / "share"
+
+    for directory in (
+        browser_home,
+        config_home,
+        cache_home,
+        data_home,
+        data_home / "applications",
+        config_home / "google-chrome" / "Crash Reports",
+    ):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    os.environ["HOME"] = str(browser_home)
+    os.environ["XDG_CONFIG_HOME"] = str(config_home)
+    os.environ["XDG_CACHE_HOME"] = str(cache_home)
+    os.environ["XDG_DATA_HOME"] = str(data_home)
+
+
 def build_driver(profile_dir: Path) -> webdriver.Chrome:
+    prepare_browser_environment(profile_dir)
     clear_stale_profile_lock(profile_dir)
     options = webdriver.ChromeOptions()
     options.binary_location = os.environ.get(
@@ -56,6 +79,8 @@ def build_driver(profile_dir: Path) -> webdriver.Chrome:
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1440,1000")
     options.add_argument("--remote-debugging-pipe")
+    options.add_argument("--disable-breakpad")
+    options.add_argument("--disable-crash-reporter")
 
     if os.environ.get("LOCALIZADOR_EDITAIS_BROWSER_HEADLESS", "true").lower() != "false":
         options.add_argument("--headless=new")
