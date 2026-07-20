@@ -55,7 +55,7 @@
         <h1>Novas licitações disponíveis</h1>
         <p>Olá,</p>
         <p>Chegaram <strong>{{ $tendersCount }}</strong> licitações novas no seu estado {{ $state }}.</p>
-        <p><a href="{{ 'https://app.localizadordeeditais.com.br/' }}">Conferir agora</a></p>
+        <p><a href="{{ env('FRONT_URL') }}">Conferir agora</a></p>
         <div class="footer">
             <p>© {{ date('Y') }} Localizadordeeditais. Todos os direitos reservados.</p>
         </div>
