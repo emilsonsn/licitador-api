@@ -5,12 +5,15 @@ import json
 import os
 import stat
 import sys
+import time
 from pathlib import Path
+from urllib.parse import parse_qsl
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -93,6 +96,88 @@ def wordpress_session_exists(driver: webdriver.Chrome) -> bool:
     return any(cookie["name"].startswith("wordpress_logged_in_") for cookie in driver.get_cookies())
 
 
+def initialize_armember_session(driver: webdriver.Chrome) -> None:
+    result = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        const password = document.querySelector('[name="user_pass"]');
+        const form = password?.closest('form');
+        const forms = [...document.querySelectorAll('form[data-random-id]')];
+        const randomIds = forms.map(item => item.dataset.randomId).filter(Boolean);
+        const nonce = form?.querySelector('[name="arm_wp_nonce"]')?.value;
+        if (!form || !randomIds.length || !nonce || !window.jQuery || !window.__ARMAJAXURL) {
+            done({ok: false, error: 'form-not-ready'});
+            return;
+        }
+
+        window.jQuery.ajax({
+            type: 'POST',
+            url: window.__ARMAJAXURL,
+            dataType: 'json',
+            data: {
+                action: 'arm_reinit_session_multiple_form',
+                form_key_arr: randomIds.join(','),
+                _wpnonce: nonce
+            },
+            success: function(payload) {
+                for (const currentForm of forms) {
+                    const fieldName = payload?.[currentForm.dataset.randomId];
+                    if (!fieldName) {
+                        done({ok: false, error: 'missing-session-field'});
+                        return;
+                    }
+                    const inputs = [...currentForm.querySelectorAll('input')].filter(input =>
+                        !['ct_bot_detector_event_token', 'apbct_visible_fields',
+                          'ct_no_cookie_hidden_field', 'armrplogin', 'armrpkey'].includes(input.name)
+                    );
+                    inputs[inputs.length - 1].name = fieldName;
+                }
+                if (payload.nonce) {
+                    form.querySelector('[name="arm_wp_nonce"]').value = payload.nonce;
+                }
+                done({ok: true});
+            },
+            error: function(xhr) {
+                done({ok: false, error: 'http-' + xhr.status});
+            }
+        });
+        """
+    )
+    if not result.get("ok"):
+        raise RuntimeError(
+            f"O ARMember não inicializou a sessão antispam ({result.get('error', 'erro desconhecido')})."
+        )
+
+
+def try_native_wordpress_login(
+    driver: webdriver.Chrome, base_url: str, username: str, password: str
+) -> bool:
+    result = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        const body = new URLSearchParams({
+            log: arguments[1],
+            pwd: arguments[2],
+            'wp-submit': 'Log In',
+            redirect_to: arguments[0] + '/buscador/',
+            testcookie: '1'
+        });
+        fetch(arguments[0] + '/wp-login.php', {
+            method: 'POST',
+            credentials: 'include',
+            cache: 'no-store',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body.toString()
+        }).then(response => done({ok: response.ok, url: response.url}))
+          .catch(error => done({ok: false, error: String(error)}));
+        """,
+        base_url,
+        username,
+        password,
+    )
+    return bool(result.get("ok") and wordpress_session_exists(driver))
+
+
 def login(driver: webdriver.Chrome, base_url: str, username: str, password: str) -> None:
     driver.get(f"{base_url}/")
     wait = WebDriverWait(driver, 45)
@@ -100,46 +185,160 @@ def login(driver: webdriver.Chrome, base_url: str, username: str, password: str)
     if wordpress_session_exists(driver):
         return
 
-    wait.until(lambda current: current.execute_script(
-        "return Boolean(document.querySelector('[name=user_login]') && document.querySelector('[name=user_pass]'));"
-    ))
-    submitted = driver.execute_script(
+    if try_native_wordpress_login(driver, base_url, username, password):
+        return
+
+    driver.execute_script(
         """
-        const username = document.querySelector('[name="user_login"]');
+        window.__armLoginResponses = [];
+        const originalOpen = XMLHttpRequest.prototype.open;
+        const originalSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            this.__trackedUrl = String(url || '');
+            return originalOpen.apply(this, arguments);
+        };
+        XMLHttpRequest.prototype.send = function() {
+            this.__requestBody = typeof arguments[0] === 'string' ? arguments[0] : '';
+            this.addEventListener('load', function() {
+                if (this.__trackedUrl.includes('admin-ajax.php')) {
+                    window.__armLoginResponses.push({
+                        status: this.status,
+                        requestBody: this.__requestBody,
+                        body: String(this.responseText || '').slice(0, 4000)
+                    });
+                }
+            });
+            return originalSend.apply(this, arguments);
+        };
+        const originalFetch = window.fetch;
+        window.fetch = async function() {
+            const response = await originalFetch.apply(this, arguments);
+            const url = String(arguments[0] || '');
+            if (url.includes('admin-ajax.php')) {
+                const copy = response.clone();
+                window.__armLoginResponses.push({
+                    status: response.status,
+                    body: String(await copy.text()).slice(0, 4000)
+                });
+            }
+            return response;
+        };
+        """
+    )
+
+    wait.until(
+        lambda current: current.execute_script(
+            """
+            const password = document.querySelector('[name="user_pass"]');
+            const form = password?.closest('form');
+            const start = form?.querySelector('.stime');
+            return Boolean(start?.name && start.value);
+            """
+        )
+    )
+    initialize_armember_session(driver)
+    driver.execute_script("window.__armLoginResponses = [];")
+
+    username_input = wait.until(EC.element_to_be_clickable((By.NAME, "user_login")))
+    username_input.clear()
+    username_input.send_keys(username)
+
+    password_input = wait.until(EC.element_to_be_clickable((By.NAME, "user_pass")))
+    password_input.clear()
+    password_input.send_keys(password)
+    time.sleep(float(os.environ.get("LOCALIZADOR_EDITAIS_LOGIN_DELAY", "5")))
+
+    antispam_ready = driver.execute_script(
+        """
         const password = document.querySelector('[name="user_pass"]');
         const form = password?.closest('form');
-        const submit = form?.querySelector('button[type="submit"], input[type="submit"]');
-        if (!username || !password || !form || !submit) return false;
-
-        const setValue = (element, value) => {
-            const setter = Object.getOwnPropertyDescriptor(
-                window.HTMLInputElement.prototype,
-                'value'
-            ).set;
-            setter.call(element, value);
-            element.dispatchEvent(new Event('input', {bubbles: true}));
-            element.dispatchEvent(new Event('change', {bubbles: true}));
-            element.dispatchEvent(new Event('blur', {bubbles: true}));
-        };
-
-        setValue(username, arguments[0]);
-        setValue(password, arguments[1]);
-        submit.scrollIntoView({block: 'center'});
-        submit.click();
+        const keypress = form?.querySelector('.kpress');
+        const keypressName = form?.querySelector('.arm_nonce_keyboard_press')?.value;
+        const captcha = form?.querySelector('input[name^="arm_captcha_"]');
+        const googleCaptcha = form?.querySelector('[name="g-recaptcha-response"]');
+        if (!keypress || !keypressName || !captcha?.value || !googleCaptcha) return false;
+        keypress.name = keypressName;
+        keypress.value = Math.max(1, arguments[0]);
+        googleCaptcha.value = captcha.value;
         return true;
         """,
-        username,
-        password,
+        len(username) + len(password),
+    )
+    if not antispam_ready:
+        raise RuntimeError("O mecanismo antispam do ARMember não foi inicializado.")
+
+    wait.until(
+        lambda current: current.execute_script(
+            "return typeof window.arm_form_ajax_action === 'function';"
+        )
+    )
+    submitted = driver.execute_script(
+        """
+        const password = document.querySelector('[name="user_pass"]');
+        const form = password?.closest('form');
+        if (!form) return false;
+        window.arm_form_ajax_action(window.jQuery(form));
+        return true;
+        """
     )
 
     if not submitted:
         raise RuntimeError("Não foi possível localizar o formulário de login do ARMember.")
 
     try:
-        WebDriverWait(driver, 60).until(lambda current: wordpress_session_exists(current))
+        WebDriverWait(driver, 60).until(
+            lambda current: wordpress_session_exists(current)
+            or bool(current.execute_script("return window.__armLoginResponses?.length;"))
+        )
+        if not wordpress_session_exists(driver):
+            raise TimeoutException()
     except TimeoutException as error:
         messages = driver.find_elements(By.CSS_SELECTOR, ".arm_error_msg, .arm-df__fc--validation, .error")
         detail = " ".join(message.text.strip() for message in messages if message.text.strip())
+        responses = driver.execute_script("return window.__armLoginResponses || [];")
+        for response in reversed(responses):
+            try:
+                payload = json.loads(response.get("body", ""))
+                response_message = payload.get("message")
+                if response_message:
+                    request_fields = []
+                    sensitive = {"user_login", "user_pass"}
+                    for name, value in parse_qsl(
+                        response.get("requestBody", ""), keep_blank_values=True
+                    ):
+                        if name in sensitive or name.startswith("arm_captcha_"):
+                            continue
+                        request_fields.append(f"{name}({len(value)})")
+                    request_detail = ", ".join(request_fields)
+                    detail = f"{detail} {response_message} [{request_detail}]".strip()
+                    break
+            except (TypeError, json.JSONDecodeError):
+                continue
+        if not detail:
+            diagnostic = driver.execute_script(
+                """
+                const password = document.querySelector('[name="user_pass"]');
+                const form = password?.closest('form');
+                if (!form) return {url: location.href, form: false};
+                const hidden = [...form.querySelectorAll('input[type="hidden"]')]
+                    .filter(input => /captcha|spam|nonce|kpress|stime|start/i.test(
+                        [input.name, input.id, input.className].join(' ')
+                    ))
+                    .map(input => ({
+                        name: input.name || '',
+                        class: input.className || '',
+                        length: String(input.value || '').length
+                    }));
+                return {
+                    url: location.href,
+                    form: true,
+                    valid: form.checkValidity(),
+                    hidden: hidden,
+                    text: String(form.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 1000)
+                };
+                """
+            )
+            detail = json.dumps(diagnostic, ensure_ascii=False)
         raise RuntimeError(f"O ARMember não concluiu o login. {detail}".strip()) from error
 
 
